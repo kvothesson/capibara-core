@@ -68,7 +68,7 @@ class CapibaraClient:
             groq_config = LLMProviderConfig(
                 name="groq",
                 api_key=groq_api_key,
-                model="llama2-70b-4096",
+                model="llama-3.3-70b-versatile",
             )
             providers.append(GroqProvider(groq_config))
         

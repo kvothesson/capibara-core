@@ -24,9 +24,9 @@ async def main():
     print("Generating Hello World script...")
     
     response = await client.run(
-        prompt="Create a simple hello world program that prints 'Hello, Capibara!'",
+        prompt="Create a simple hello world program that prints 'Hello, Capibara!' with current time and date and a random number and your favorite color",
         language="python",
-        execute=True,  # Execute the generated script
+        execute=True,  # Execute the generated script in Docker
     )
     
     print(f"\nGenerated Script ID: {response.script_id}")

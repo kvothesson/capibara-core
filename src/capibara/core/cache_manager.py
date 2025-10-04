@@ -75,6 +75,25 @@ class CacheManager:
             script_data["access_count"] = 0
             script_data["cache_hit_count"] = 0
             
+            # Convert all datetime objects to ISO format strings
+            def convert_datetime(obj):
+                if hasattr(obj, 'isoformat'):
+                    return obj.isoformat()
+                return str(obj)
+            
+            # Recursively convert datetime objects
+            def clean_data(data):
+                if isinstance(data, dict):
+                    return {k: clean_data(v) for k, v in data.items()}
+                elif isinstance(data, list):
+                    return [clean_data(item) for item in data]
+                elif hasattr(data, 'isoformat'):
+                    return data.isoformat()
+                else:
+                    return data
+            
+            script_data = clean_data(script_data)
+            
             # Write script to file
             with open(script_file, 'w') as f:
                 json.dump(script_data, f, indent=2, default=str)

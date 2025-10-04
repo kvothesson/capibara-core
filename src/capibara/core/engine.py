@@ -56,7 +56,7 @@ class CapibaraEngine:
         # Check cache first
         cached_script = await self.cache_manager.get_script(fingerprint)
         if cached_script:
-            logger.info("Script served from cache", script_id=cached_script.script_id)
+            logger.info("Script served from cache", script_id=cached_script["script_id"])
             return await self._build_response_from_cache(cached_script, request)
         
         # Process prompt
@@ -104,9 +104,9 @@ class CapibaraEngine:
         # Cache the script
         await self.cache_manager.store_script(script_info)
         
-        # Execute if requested (this would be controlled by a parameter)
+        # Execute if requested
         execution_result = None
-        if request.get("execute", False):
+        if hasattr(request, 'execute') and request.execute:
             execution_result = await self._execute_script(script_code, request)
         
         # Build response
@@ -196,7 +196,7 @@ class CapibaraEngine:
             details=kwargs,
         )
         # This would be sent to audit logging system
-        logger.info("Audit event", event=event.dict())
+        logger.info("Audit event", **event.dict())
     
     def _generate_script_id(self) -> str:
         """Generate unique script ID."""

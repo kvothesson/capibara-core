@@ -14,6 +14,7 @@ class RunRequest(BaseModel):
     llm_provider: Optional[str] = Field(None, description="Specific LLM provider to use")
     cache_ttl: Optional[int] = Field(3600, description="Cache TTL in seconds")
     resource_limits: Optional[Dict[str, Any]] = Field(None, description="Custom resource limits")
+    execute: bool = Field(False, description="Whether to execute the generated script")
     
     @validator('prompt')
     def prompt_not_empty(cls, v: str) -> str:

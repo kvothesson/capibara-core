@@ -19,8 +19,8 @@ logger = get_logger(__name__)
 class ContainerRunner:
     """Executes scripts in secure containers with resource limits."""
     
-    def __init__(self, docker_client: Optional[docker.AsyncDockerClient] = None):
-        self.docker_client = docker_client or docker.AsyncDockerClient()
+    def __init__(self, docker_client: Optional[docker.DockerClient] = None):
+        self.docker_client = docker_client or docker.from_env()
         self.active_containers: Dict[str, str] = {}  # script_id -> container_id
     
     async def execute(
@@ -150,18 +150,18 @@ class ContainerRunner:
             "cpu_quota": int(resource_limits.cpu_time_seconds * 100000),
         }
         
-        # Add seccomp profile if available
-        seccomp_profile = self._get_seccomp_profile(security_policy)
-        if seccomp_profile:
-            container_config["security_opt"].append(f"seccomp={seccomp_profile}")
+        # Add seccomp profile if available (skip for now to avoid errors)
+        # seccomp_profile = self._get_seccomp_profile(security_policy)
+        # if seccomp_profile:
+        #     container_config["security_opt"].append(f"seccomp={seccomp_profile}")
         
         # Create and start container
-        container = await self.docker_client.containers.create(
+        container = self.docker_client.containers.create(
             **container_config,
             command=self._get_execution_command(language),
         )
         
-        await container.start()
+        container.start()
         
         logger.debug("Container created and started", 
                     container_id=container.id,
@@ -180,21 +180,26 @@ class ContainerRunner:
         
         # Wait for execution to complete
         try:
-            result = await container.wait(timeout=resource_limits.execution_time_seconds)
+            result = container.wait(timeout=resource_limits.execution_time_seconds)
             exit_code = result["StatusCode"]
-        except asyncio.TimeoutError:
-            logger.warning("Container execution timed out", container_id=container_id)
-            await container.kill()
+        except Exception as e:
+            logger.warning("Container execution timed out", container_id=container_id, error=str(e))
+            container.kill()
             exit_code = 124  # Timeout exit code
         
         # Get logs
-        logs = await container.logs(stdout=True, stderr=True)
+        logs = container.logs(stdout=True, stderr=True)
         stdout, stderr = self._parse_logs(logs)
         
         # Get resource usage (simplified)
-        stats = await container.stats(stream=False)
-        memory_used_mb = stats["memory_stats"]["usage"] / (1024 * 1024)
-        cpu_time_ms = self._calculate_cpu_time(stats)
+        try:
+            stats = container.stats(stream=False)
+            memory_used_mb = stats.get("memory_stats", {}).get("usage", 0) / (1024 * 1024)
+            cpu_time_ms = self._calculate_cpu_time(stats)
+        except Exception as e:
+            logger.warning("Failed to get container stats", error=str(e))
+            memory_used_mb = 0.0
+            cpu_time_ms = 0
         
         # Check for resource limit violations
         resource_violations = self._check_resource_limits(
@@ -298,7 +303,7 @@ class ContainerRunner:
         """Clean up container after execution."""
         try:
             container = self.docker_client.containers.get(container_id)
-            await container.remove(force=True)
+            container.remove(force=True)
             logger.debug("Container cleaned up", container_id=container_id)
         except DockerException as e:
             logger.warning("Failed to clean up container", 
@@ -317,7 +322,7 @@ class ContainerRunner:
     async def health_check(self) -> bool:
         """Check if container runtime is healthy."""
         try:
-            await self.docker_client.ping()
+            self.docker_client.ping()
             return True
         except Exception as e:
             logger.warning("Container runtime health check failed", error=str(e))

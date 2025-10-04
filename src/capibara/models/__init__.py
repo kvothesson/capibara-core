@@ -3,7 +3,8 @@
 from .requests import RunRequest, ListRequest, ShowRequest, ClearRequest
 from .responses import RunResponse, ListResponse, ShowResponse, ClearResponse, ScriptInfo
 from .manifests import SecurityPolicy, LLMProviderConfig, ExecutionConfig
-from .security import SecurityViolation, AuditEvent, ResourceLimits
+from .security import SecurityViolation, AuditEvent
+from .manifests import ResourceLimits
 
 __all__ = [
     # Requests
