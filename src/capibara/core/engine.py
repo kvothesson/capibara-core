@@ -159,12 +159,15 @@ class CapibaraEngine:
         """Execute script in sandboxed container."""
         logger.info("Executing script in sandbox")
         
+        # Modify code to use actual inputs if provided
+        modified_code = self._modify_code_for_execution(code, request)
+        
         # Get security policy
         policy = self.policy_manager.get_policy(request.security_policy)
         
         # Execute in container
         result = await self.container_runner.execute(
-            code=code,
+            code=modified_code,
             language=request.language,
             resource_limits=policy.resource_limits,
             security_policy=policy,
@@ -210,6 +213,76 @@ class CapibaraEngine:
     def _generate_event_id(self) -> str:
         """Generate unique event ID."""
         return f"event_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}_{hashlib.md5().hexdigest()[:8]}"
+    
+    def _modify_code_for_execution(self, code: str, request: RunRequest) -> str:
+        """Modify generated code to use actual inputs instead of hardcoded values."""
+        if not request.context or 'inputs' not in request.context:
+            return code
+        
+        inputs = request.context['inputs']
+        if not isinstance(inputs, list) or len(inputs) == 0:
+            return code
+        
+        # For Python scripts, try to replace hardcoded values in main function
+        if request.language.lower() == "python":
+            return self._modify_python_code(code, inputs)
+        
+        return code
+    
+    def _modify_python_code(self, code: str, inputs: List[Any]) -> str:
+        """Modify Python code to use actual inputs."""
+        import re
+        
+        # Convert inputs to appropriate Python literals
+        python_inputs = []
+        for input_val in inputs:
+            if isinstance(input_val, str):
+                # Try to convert to number if possible
+                try:
+                    if '.' in input_val:
+                        python_inputs.append(str(float(input_val)))
+                    else:
+                        python_inputs.append(str(int(input_val)))
+                except ValueError:
+                    python_inputs.append(f'"{input_val}"')
+            elif isinstance(input_val, bool):
+                python_inputs.append(str(input_val))
+            else:
+                python_inputs.append(str(input_val))
+        
+        # Look for patterns like (1.0, 2.0, 3.0) or [1.0, 2.0, 3.0] in main function
+        # and replace with actual inputs
+        input_patterns = [
+            r'\(\s*\d+\.?\d*\s*,\s*\d+\.?\d*\s*,\s*\d+\.?\d*\s*\)',  # (1.0, 2.0, 3.0)
+            r'\[\s*\d+\.?\d*\s*,\s*\d+\.?\d*\s*,\s*\d+\.?\d*\s*\]',  # [1.0, 2.0, 3.0]
+            r'\(\s*\d+\.?\d*\s*,\s*\d+\.?\d*\s*\)',  # (1.0, 2.0)
+            r'\[\s*\d+\.?\d*\s*,\s*\d+\.?\d*\s*\]',  # [1.0, 2.0]
+        ]
+        
+        modified_code = code
+        for pattern in input_patterns:
+            matches = re.findall(pattern, modified_code)
+            for match in matches:
+                if len(python_inputs) >= 2:  # Only replace if we have enough inputs
+                    if len(python_inputs) >= 3:
+                        replacement = f"({', '.join(python_inputs[:3])})"
+                    else:
+                        replacement = f"({', '.join(python_inputs)})"
+                    modified_code = modified_code.replace(match, replacement, 1)
+                    break
+        
+        # Also try to replace individual number literals in function calls
+        # Look for patterns like function_name(1.0, 2.0, 3.0)
+        function_call_pattern = r'(\w+)\s*\(\s*\d+\.?\d*\s*,\s*\d+\.?\d*\s*,\s*\d+\.?\d*\s*\)'
+        matches = re.findall(function_call_pattern, modified_code)
+        for func_name in matches:
+            if len(python_inputs) >= 3:
+                replacement = f"{func_name}({', '.join(python_inputs[:3])})"
+                # Replace the first occurrence of this pattern
+                pattern_to_replace = f"{func_name}(\\s*\\d+\\.?\\d*\\s*,\\s*\\d+\\.?\\d*\\s*,\\s*\\d+\\.?\\d*\\s*)"
+                modified_code = re.sub(pattern_to_replace, replacement, modified_code, count=1)
+        
+        return modified_code
 
 
 class SecurityError(Exception):

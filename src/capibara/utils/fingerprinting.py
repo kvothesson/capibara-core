@@ -37,7 +37,29 @@ def _normalize_context(context: Dict[str, Any]) -> Dict[str, Any]:
     # Sort keys and normalize values
     normalized = {}
     for key, value in sorted(context.items()):
-        if isinstance(value, dict):
+        # Skip specific input values for caching - only include type information
+        if key == 'inputs' and isinstance(value, list):
+            # Only include the count and types, not the actual values
+            if len(value) > 0:
+                input_types = []
+                for input_val in value:
+                    if isinstance(input_val, str):
+                        try:
+                            float(input_val)
+                            input_types.append("number")
+                        except ValueError:
+                            input_types.append("string")
+                    elif isinstance(input_val, (int, float)):
+                        input_types.append("number")
+                    elif isinstance(input_val, bool):
+                        input_types.append("boolean")
+                    else:
+                        input_types.append("string")
+                normalized[key] = {
+                    "count": len(value),
+                    "types": sorted(set(input_types))
+                }
+        elif isinstance(value, dict):
             normalized[key] = _normalize_context(value)
         elif isinstance(value, list):
             normalized[key] = sorted(value) if all(isinstance(x, str) for x in value) else value

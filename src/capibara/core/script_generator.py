@@ -86,6 +86,8 @@ Requirements:
 - Make the code safe and secure
 - Include input validation where needed
 - Add logging for important operations
+- Create a function that accepts parameters (don't hardcode specific values)
+- Include a main section that demonstrates the function with example usage
 
 Return only the executable code, no explanations or markdown formatting.
 """

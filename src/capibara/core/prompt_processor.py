@@ -98,7 +98,7 @@ class PromptProcessor:
             file_list = ', '.join(context['files'])
             enhanced_prompt = f"Given files: {file_list}. {enhanced_prompt}"
         
-        # Add data context
+        # Add data context (but not input values)
         if 'data' in context:
             data_info = f"Data: {context['data']}"
             enhanced_prompt = f"{enhanced_prompt}\n\nContext: {data_info}"
@@ -107,6 +107,32 @@ class PromptProcessor:
         if 'environment' in context:
             env_info = f"Environment: {context['environment']}"
             enhanced_prompt = f"{enhanced_prompt}\n\nEnvironment: {env_info}"
+        
+        # Handle inputs separately - don't include them in the prompt for caching
+        # but add type information for function generation
+        if 'inputs' in context:
+            inputs = context['inputs']
+            if isinstance(inputs, list) and len(inputs) > 0:
+                # Determine input types and add to prompt for function signature
+                input_types = []
+                for input_val in inputs:
+                    if isinstance(input_val, str):
+                        # Try to determine if it's a number
+                        try:
+                            float(input_val)
+                            input_types.append("number")
+                        except ValueError:
+                            input_types.append("string")
+                    elif isinstance(input_val, (int, float)):
+                        input_types.append("number")
+                    elif isinstance(input_val, bool):
+                        input_types.append("boolean")
+                    else:
+                        input_types.append("string")
+                
+                # Add input type information to prompt
+                type_info = f"The function should accept {len(inputs)} parameters of types: {', '.join(set(input_types))}"
+                enhanced_prompt = f"{enhanced_prompt}\n\n{type_info}"
         
         return enhanced_prompt
     
