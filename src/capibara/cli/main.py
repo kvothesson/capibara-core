@@ -94,6 +94,13 @@ def stats(ctx):
     asyncio.run(_show_stats(ctx))
 
 
+@cli.command()
+@click.pass_context
+def doctor(ctx):
+    """Check system health and dependencies."""
+    asyncio.run(_doctor_check(ctx))
+
+
 async def _run_script(ctx, prompt: str, language: str, execute: bool, 
                      security_policy: Optional[str], provider: Optional[str], 
                      context: Optional[str]):
@@ -350,6 +357,80 @@ async def _show_stats(ctx):
         console.print(f"[bold red]Error:[/bold red] {str(e)}")
         if ctx.obj.get('verbose'):
             console.print_exception()
+
+
+async def _doctor_check(ctx):
+    """Check system health and dependencies."""
+    from rich.panel import Panel
+    import docker
+    import sys
+    
+    # Create health check table
+    table = Table(title="Capibara Core Health Check")
+    table.add_column("Component", style="cyan")
+    table.add_column("Status", style="green")
+    table.add_column("Details", style="white")
+    
+    # Check Python version
+    python_version = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+    if sys.version_info >= (3, 11):
+        table.add_row("Python", "✅ OK", f"v{python_version}")
+    else:
+        table.add_row("Python", "❌ FAIL", f"v{python_version} (requires 3.11+)")
+    
+    # Check Docker
+    try:
+        docker_client = docker.from_env()
+        docker_client.ping()
+        docker_version = docker_client.version()["Version"]
+        table.add_row("Docker", "✅ OK", f"v{docker_version}")
+    except Exception as e:
+        table.add_row("Docker", "❌ FAIL", f"Not running or not installed: {str(e)}")
+    
+    # Check API keys
+    groq_key = os.getenv("GROQ_API_KEY")
+    openai_key = os.getenv("OPENAI_API_KEY")
+    
+    if groq_key:
+        table.add_row("Groq API", "✅ OK", "Key configured")
+    else:
+        table.add_row("Groq API", "⚠️  WARN", "No key found (set GROQ_API_KEY)")
+    
+    if openai_key:
+        table.add_row("OpenAI API", "✅ OK", "Key configured")
+    else:
+        table.add_row("OpenAI API", "⚠️  WARN", "No key found (set OPENAI_API_KEY)")
+    
+    # Check cache directory
+    cache_dir = os.path.expanduser("~/.capibara/cache")
+    if os.path.exists(cache_dir):
+        table.add_row("Cache", "✅ OK", f"Directory exists: {cache_dir}")
+    else:
+        table.add_row("Cache", "ℹ️  INFO", "Will be created on first use")
+    
+    console.print(table)
+    
+    # Overall status
+    if "❌ FAIL" in str(table):
+        console.print(Panel("❌ System not ready. Please fix the issues above.", style="red"))
+    elif "⚠️  WARN" in str(table):
+        console.print(Panel("⚠️  System ready with warnings. Consider configuring API keys.", style="yellow"))
+    else:
+        console.print(Panel("✅ System ready! You can start using Capibara Core.", style="green"))
+    
+    # Installation instructions
+    console.print("\n[bold]Quick Start:[/bold]")
+    console.print("1. Configure API key: [cyan]export GROQ_API_KEY=your_key[/cyan]")
+    console.print("2. Run example: [cyan]capibara run 'Hello World' --execute[/cyan]")
+    console.print("3. View help: [cyan]capibara --help[/cyan]")
+    
+    # Docker installation help
+    if "❌ FAIL" in str(table) and "Docker" in str(table):
+        console.print("\n[bold]Docker Installation Help:[/bold]")
+        console.print("• macOS: [cyan]brew install --cask docker[/cyan]")
+        console.print("• Linux: [cyan]curl -fsSL https://get.docker.com | sh[/cyan]")
+        console.print("• Windows: Download from https://docker.com")
+        console.print("• Or run: [cyan]./scripts/install-docker.sh[/cyan]")
 
 
 def _get_client(ctx) -> CapibaraClient:
