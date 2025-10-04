@@ -109,15 +109,9 @@ class CapibaraClient:
             language=language,
             security_policy=security_policy,
             llm_provider=llm_provider,
+            execute=execute,
             **kwargs
         )
-        
-        # Add execute flag to request
-        request_dict = request.dict()
-        request_dict["execute"] = execute
-        
-        # Create new request with execute flag
-        request = RunRequest(**request_dict)
         
         return await self.engine.run_script(request)
     

@@ -135,12 +135,17 @@ class CapibaraEngine:
         # Update cache hit count
         await self.cache_manager.increment_cache_hit(cached_script["script_id"])
         
+        # Execute if requested
+        execution_result = None
+        if hasattr(request, 'execute') and request.execute:
+            execution_result = await self._execute_script(cached_script["code"], request)
+        
         return RunResponse(
             script_id=cached_script["script_id"],
             prompt=cached_script["prompt"],
             language=cached_script["language"],
             code=cached_script["code"],
-            execution_result=None,
+            execution_result=execution_result,
             cached=True,
             cache_hit_count=cached_script.get("cache_hit_count", 0) + 1,
             security_policy=cached_script.get("security_policy"),
