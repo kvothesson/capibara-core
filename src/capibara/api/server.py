@@ -5,15 +5,15 @@ from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime
 from typing import Any
 
-import uvicorn  # type: ignore[import-not-found]
-from fastapi import (  # type: ignore[import-not-found]
+import uvicorn
+from fastapi import (
     FastAPI,
     HTTPException,
     Request,
     Response,
 )
-from fastapi.middleware.cors import CORSMiddleware  # type: ignore[import-not-found]
-from fastapi.responses import JSONResponse  # type: ignore[import-not-found]
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from capibara.api.health_endpoint import health_check, health_status
 from capibara.utils.config import get_config
