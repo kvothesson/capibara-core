@@ -1,6 +1,5 @@
 """Main SDK client for Capibara Core."""
 
-from datetime import UTC, datetime
 from typing import Any
 
 from capibara.core.cache_manager import CacheManager
@@ -157,8 +156,35 @@ class CapibaraClient:
             sort_order=sort_order,
         )
 
-        # TODO: Implement proper list_scripts method in cache_manager
-        scripts: list[ScriptInfo] = []  # Placeholder - would get from cache_manager
+        # Get scripts from cache manager
+        scripts_data = await self.cache_manager.list_scripts(
+            limit=limit,
+            offset=offset,
+            language=language,
+            search=search,
+            sort_by=sort_by,
+            sort_order=sort_order,
+        )
+
+        # Convert script data to ScriptInfo objects
+        scripts: list[ScriptInfo] = []
+        for script_data in scripts_data:
+            script = ScriptInfo(
+                script_id=script_data["script_id"],
+                prompt=script_data["prompt"],
+                language=script_data["language"],
+                created_at=script_data["created_at"],
+                updated_at=script_data["updated_at"],
+                execution_count=script_data.get("execution_count", 0),
+                last_executed_at=script_data.get("last_executed_at"),
+                cache_hit_count=script_data.get("cache_hit_count", 0),
+                security_policy=script_data.get("security_policy"),
+                llm_provider=script_data.get("llm_provider", "unknown"),
+                fingerprint=script_data.get("fingerprint", ""),
+                size_bytes=script_data.get("size_bytes", 0),
+                metadata=script_data.get("metadata", {}),
+            )
+            scripts.append(script)
 
         return ListResponse(
             scripts=scripts,
@@ -177,27 +203,32 @@ class CapibaraClient:
         """Show details of a specific script."""
         logger.info("Showing script", script_id=script_id)
 
-        # TODO: Implement proper get_script method in cache_manager
-        # Placeholder script for now
+        # Get script from cache manager
+        script_data = await self.cache_manager.get_script(script_id)
+
+        if script_data is None:
+            raise ValueError(f"Script not found: {script_id}")
+
+        # Convert script data to ScriptInfo object
         script = ScriptInfo(
-            script_id=script_id,
-            prompt="Placeholder prompt",
-            language="python",
-            created_at=datetime.now(UTC),
-            updated_at=datetime.now(UTC),
-            execution_count=0,
-            last_executed_at=None,
-            cache_hit_count=0,
-            security_policy=None,
-            llm_provider="openai",
-            fingerprint="placeholder",
-            size_bytes=0,
-            metadata={},
+            script_id=script_data["script_id"],
+            prompt=script_data["prompt"],
+            language=script_data["language"],
+            created_at=script_data["created_at"],
+            updated_at=script_data["updated_at"],
+            execution_count=script_data.get("execution_count", 0),
+            last_executed_at=script_data.get("last_executed_at"),
+            cache_hit_count=script_data.get("cache_hit_count", 0),
+            security_policy=script_data.get("security_policy"),
+            llm_provider=script_data.get("llm_provider", "unknown"),
+            fingerprint=script_data.get("fingerprint", ""),
+            size_bytes=script_data.get("size_bytes", 0),
+            metadata=script_data.get("metadata", {}),
         )
 
         return ShowResponse(
             script=script,
-            code="print('Hello, World!')" if include_code else None,
+            code=script_data.get("code") if include_code else None,
             execution_logs=None,  # Would need to implement execution log storage
         )
 
