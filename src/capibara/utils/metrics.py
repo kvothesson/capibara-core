@@ -1,185 +1,339 @@
-"""Metrics collection utilities for Capibara Core."""
+"""Prometheus metrics collection for Capibara Core."""
 
 import time
-from typing import Any, Dict, List, Optional
-from dataclasses import dataclass, field
+from typing import Dict, Any, Optional
+from prometheus_client import Counter, Histogram, Gauge, Info, CollectorRegistry, generate_latest
+
 from capibara.utils.logging import get_logger
 
 logger = get_logger(__name__)
 
 
-@dataclass
-class MetricPoint:
-    """A single metric data point."""
-    name: str
-    value: float
-    timestamp: float
-    tags: Dict[str, str] = field(default_factory=dict)
-
-
 class MetricsCollector:
-    """Collects and manages metrics for Capibara Core."""
+    """Collects and exposes Prometheus metrics for Capibara Core."""
     
-    def __init__(self):
-        self.metrics: List[MetricPoint] = []
-        self.counters: Dict[str, float] = {}
-        self.gauges: Dict[str, float] = {}
-        self.histograms: Dict[str, List[float]] = {}
+    def __init__(self, registry: Optional[CollectorRegistry] = None):
+        self.registry = registry or CollectorRegistry()
+        self._setup_metrics()
     
-    def increment_counter(self, name: str, value: float = 1.0, tags: Optional[Dict[str, str]] = None) -> None:
-        """Increment a counter metric."""
-        if name not in self.counters:
-            self.counters[name] = 0.0
+    def _setup_metrics(self):
+        """Set up Prometheus metrics."""
         
-        self.counters[name] += value
+        # Script generation metrics
+        self.script_generations_total = Counter(
+            'capibara_script_generations_total',
+            'Total number of script generation requests',
+            ['language', 'provider', 'status'],
+            registry=self.registry
+        )
         
-        self.metrics.append(MetricPoint(
-            name=f"{name}_counter",
-            value=value,
-            timestamp=time.time(),
-            tags=tags or {}
-        ))
+        self.script_generation_duration = Histogram(
+            'capibara_script_generation_duration_seconds',
+            'Time spent generating scripts',
+            ['language', 'provider'],
+            buckets=[0.1, 0.5, 1.0, 2.0, 5.0, 10.0, 30.0, 60.0],
+            registry=self.registry
+        )
         
-        logger.debug("Counter incremented", name=name, value=value, total=self.counters[name])
+        # Execution metrics
+        self.script_executions_total = Counter(
+            'capibara_script_executions_total',
+            'Total number of script executions',
+            ['language', 'status'],
+            registry=self.registry
+        )
+        
+        self.script_execution_duration = Histogram(
+            'capibara_script_execution_duration_seconds',
+            'Time spent executing scripts',
+            ['language'],
+            buckets=[0.1, 0.5, 1.0, 2.0, 5.0, 10.0, 30.0, 60.0, 120.0],
+            registry=self.registry
+        )
+        
+        self.script_execution_memory = Histogram(
+            'capibara_script_execution_memory_bytes',
+            'Memory used during script execution',
+            ['language'],
+            buckets=[1024*1024, 5*1024*1024, 10*1024*1024, 25*1024*1024, 50*1024*1024, 100*1024*1024],
+            registry=self.registry
+        )
+        
+        # Cache metrics
+        self.cache_operations_total = Counter(
+            'capibara_cache_operations_total',
+            'Total number of cache operations',
+            ['operation', 'result'],
+            registry=self.registry
+        )
+        
+        self.cache_size_bytes = Gauge(
+            'capibara_cache_size_bytes',
+            'Total size of cached scripts in bytes',
+            registry=self.registry
+        )
+        
+        self.cache_entries_total = Gauge(
+            'capibara_cache_entries_total',
+            'Total number of cached scripts',
+            registry=self.registry
+        )
+        
+        # Security metrics
+        self.security_scans_total = Counter(
+            'capibara_security_scans_total',
+            'Total number of security scans',
+            ['language', 'policy', 'result'],
+            registry=self.registry
+        )
+        
+        self.security_violations_total = Counter(
+            'capibara_security_violations_total',
+            'Total number of security violations',
+            ['rule_name', 'severity'],
+            registry=self.registry
+        )
+        
+        self.security_scan_duration = Histogram(
+            'capibara_security_scan_duration_seconds',
+            'Time spent on security scans',
+            ['language'],
+            buckets=[0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1.0],
+            registry=self.registry
+        )
+        
+        # LLM provider metrics
+        self.llm_requests_total = Counter(
+            'capibara_llm_requests_total',
+            'Total number of LLM requests',
+            ['provider', 'model', 'status'],
+            registry=self.registry
+        )
+        
+        self.llm_request_duration = Histogram(
+            'capibara_llm_request_duration_seconds',
+            'Time spent on LLM requests',
+            ['provider', 'model'],
+            buckets=[0.1, 0.5, 1.0, 2.0, 5.0, 10.0, 30.0, 60.0],
+            registry=self.registry
+        )
+        
+        self.llm_tokens_total = Counter(
+            'capibara_llm_tokens_total',
+            'Total number of LLM tokens processed',
+            ['provider', 'model', 'type'],
+            registry=self.registry
+        )
+        
+        # System metrics
+        self.active_containers = Gauge(
+            'capibara_active_containers',
+            'Number of active execution containers',
+            registry=self.registry
+        )
+        
+        self.container_errors_total = Counter(
+            'capibara_container_errors_total',
+            'Total number of container errors',
+            ['error_type'],
+            registry=self.registry
+        )
+        
+        # Health check metrics
+        self.health_check_status = Gauge(
+            'capibara_health_check_status',
+            'Health check status (1=healthy, 0=unhealthy)',
+            ['component'],
+            registry=self.registry
+        )
+        
+        # Application info
+        self.app_info = Info(
+            'capibara_app_info',
+            'Application information',
+            registry=self.registry
+        )
+        
+        # Set application info
+        self.app_info.info({
+            'version': '0.1.0',
+            'build_date': time.strftime('%Y-%m-%d'),
+            'python_version': '3.11'
+        })
+        
+        logger.info("Metrics collector initialized")
     
-    def set_gauge(self, name: str, value: float, tags: Optional[Dict[str, str]] = None) -> None:
-        """Set a gauge metric value."""
-        self.gauges[name] = value
+    def record_script_generation(self, language: str, provider: str, status: str, duration: float):
+        """Record script generation metrics."""
+        self.script_generations_total.labels(
+            language=language,
+            provider=provider,
+            status=status
+        ).inc()
         
-        self.metrics.append(MetricPoint(
-            name=f"{name}_gauge",
-            value=value,
-            timestamp=time.time(),
-            tags=tags or {}
-        ))
+        self.script_generation_duration.labels(
+            language=language,
+            provider=provider
+        ).observe(duration)
         
-        logger.debug("Gauge set", name=name, value=value)
+        logger.debug("Recorded script generation metrics", 
+                    language=language, provider=provider, status=status, duration=duration)
     
-    def record_histogram(self, name: str, value: float, tags: Optional[Dict[str, str]] = None) -> None:
-        """Record a histogram metric value."""
-        if name not in self.histograms:
-            self.histograms[name] = []
+    def record_script_execution(self, language: str, status: str, duration: float, memory_bytes: int):
+        """Record script execution metrics."""
+        self.script_executions_total.labels(
+            language=language,
+            status=status
+        ).inc()
         
-        self.histograms[name].append(value)
+        self.script_execution_duration.labels(
+            language=language
+        ).observe(duration)
         
-        self.metrics.append(MetricPoint(
-            name=f"{name}_histogram",
-            value=value,
-            timestamp=time.time(),
-            tags=tags or {}
-        ))
+        self.script_execution_memory.labels(
+            language=language
+        ).observe(memory_bytes)
         
-        logger.debug("Histogram recorded", name=name, value=value)
+        logger.debug("Recorded script execution metrics",
+                    language=language, status=status, duration=duration, memory_bytes=memory_bytes)
     
-    def record_timing(self, name: str, duration_ms: float, tags: Optional[Dict[str, str]] = None) -> None:
-        """Record a timing metric."""
-        self.record_histogram(f"{name}_duration", duration_ms, tags)
-    
-    def get_counter(self, name: str) -> float:
-        """Get current counter value."""
-        return self.counters.get(name, 0.0)
-    
-    def get_gauge(self, name: str) -> float:
-        """Get current gauge value."""
-        return self.gauges.get(name, 0.0)
-    
-    def get_histogram_stats(self, name: str) -> Dict[str, float]:
-        """Get histogram statistics."""
-        values = self.histograms.get(name, [])
-        if not values:
-            return {"count": 0, "min": 0, "max": 0, "avg": 0, "p50": 0, "p95": 0, "p99": 0}
+    def record_cache_operation(self, operation: str, result: str):
+        """Record cache operation metrics."""
+        self.cache_operations_total.labels(
+            operation=operation,
+            result=result
+        ).inc()
         
-        sorted_values = sorted(values)
-        count = len(values)
-        
-        return {
-            "count": count,
-            "min": min(values),
-            "max": max(values),
-            "avg": sum(values) / count,
-            "p50": sorted_values[int(count * 0.5)] if count > 0 else 0,
-            "p95": sorted_values[int(count * 0.95)] if count > 0 else 0,
-            "p99": sorted_values[int(count * 0.99)] if count > 0 else 0,
-        }
+        logger.debug("Recorded cache operation metrics", operation=operation, result=result)
     
-    def get_all_metrics(self) -> Dict[str, Any]:
-        """Get all metrics in a dictionary format."""
-        return {
-            "counters": self.counters.copy(),
-            "gauges": self.gauges.copy(),
-            "histograms": {
-                name: self.get_histogram_stats(name)
-                for name in self.histograms.keys()
-            },
-            "total_metrics": len(self.metrics),
-        }
+    def update_cache_metrics(self, size_bytes: int, entries_count: int):
+        """Update cache size and entry count metrics."""
+        self.cache_size_bytes.set(size_bytes)
+        self.cache_entries_total.set(entries_count)
+        
+        logger.debug("Updated cache metrics", size_bytes=size_bytes, entries_count=entries_count)
     
-    def clear_metrics(self) -> None:
-        """Clear all metrics."""
-        self.metrics.clear()
-        self.counters.clear()
-        self.gauges.clear()
-        self.histograms.clear()
-        logger.info("All metrics cleared")
+    def record_security_scan(self, language: str, policy: str, result: str, duration: float):
+        """Record security scan metrics."""
+        self.security_scans_total.labels(
+            language=language,
+            policy=policy,
+            result=result
+        ).inc()
+        
+        self.security_scan_duration.labels(
+            language=language
+        ).observe(duration)
+        
+        logger.debug("Recorded security scan metrics",
+                    language=language, policy=policy, result=result, duration=duration)
     
-    def export_metrics(self, format: str = "json") -> str:
-        """Export metrics in specified format."""
-        if format == "json":
-            import json
-            return json.dumps(self.get_all_metrics(), indent=2)
-        elif format == "prometheus":
-            return self._export_prometheus()
-        else:
-            raise ValueError(f"Unsupported export format: {format}")
+    def record_security_violation(self, rule_name: str, severity: str):
+        """Record security violation metrics."""
+        self.security_violations_total.labels(
+            rule_name=rule_name,
+            severity=severity
+        ).inc()
+        
+        logger.debug("Recorded security violation metrics", rule_name=rule_name, severity=severity)
     
-    def _export_prometheus(self) -> str:
-        """Export metrics in Prometheus format."""
-        lines = []
+    def record_llm_request(self, provider: str, model: str, status: str, duration: float, 
+                          tokens_prompt: int = 0, tokens_completion: int = 0):
+        """Record LLM request metrics."""
+        self.llm_requests_total.labels(
+            provider=provider,
+            model=model,
+            status=status
+        ).inc()
         
-        # Export counters
-        for name, value in self.counters.items():
-            lines.append(f"# TYPE {name} counter")
-            lines.append(f"{name} {value}")
+        self.llm_request_duration.labels(
+            provider=provider,
+            model=model
+        ).observe(duration)
         
-        # Export gauges
-        for name, value in self.gauges.items():
-            lines.append(f"# TYPE {name} gauge")
-            lines.append(f"{name} {value}")
+        if tokens_prompt > 0:
+            self.llm_tokens_total.labels(
+                provider=provider,
+                model=model,
+                type="prompt"
+            ).inc(tokens_prompt)
         
-        # Export histograms
-        for name, stats in self.get_all_metrics()["histograms"].items():
-            lines.append(f"# TYPE {name} histogram")
-            lines.append(f"{name}_count {stats['count']}")
-            lines.append(f"{name}_sum {stats['avg'] * stats['count']}")
-            lines.append(f"{name}_bucket{{le=\"+Inf\"}} {stats['count']}")
+        if tokens_completion > 0:
+            self.llm_tokens_total.labels(
+                provider=provider,
+                model=model,
+                type="completion"
+            ).inc(tokens_completion)
         
-        return "\n".join(lines)
+        logger.debug("Recorded LLM request metrics",
+                    provider=provider, model=model, status=status, duration=duration)
+    
+    def update_active_containers(self, count: int):
+        """Update active containers count."""
+        self.active_containers.set(count)
+        
+        logger.debug("Updated active containers count", count=count)
+    
+    def record_container_error(self, error_type: str):
+        """Record container error metrics."""
+        self.container_errors_total.labels(
+            error_type=error_type
+        ).inc()
+        
+        logger.debug("Recorded container error metrics", error_type=error_type)
+    
+    def update_health_status(self, component: str, healthy: bool):
+        """Update health check status."""
+        self.health_check_status.labels(
+            component=component
+        ).set(1 if healthy else 0)
+        
+        logger.debug("Updated health status", component=component, healthy=healthy)
+    
+    def get_metrics(self) -> str:
+        """Get metrics in Prometheus format."""
+        return generate_latest(self.registry).decode('utf-8')
+    
+    def get_metrics_dict(self) -> Dict[str, Any]:
+        """Get metrics as a dictionary for debugging."""
+        metrics = {}
+        
+        # Collect all metric families
+        for metric_family in self.registry.collect():
+            family_name = metric_family.name
+            family_type = metric_family.type
+            
+            if family_name not in metrics:
+                metrics[family_name] = {
+                    'type': family_type,
+                    'samples': []
+                }
+            
+            for sample in metric_family.samples:
+                metrics[family_name]['samples'].append({
+                    'name': sample.name,
+                    'labels': sample.labels,
+                    'value': sample.value,
+                    'timestamp': getattr(sample, 'timestamp', None)
+                })
+        
+        return metrics
 
 
 # Global metrics collector instance
-_metrics_collector = MetricsCollector()
+_metrics_collector: Optional[MetricsCollector] = None
 
 
 def get_metrics_collector() -> MetricsCollector:
     """Get the global metrics collector instance."""
+    global _metrics_collector
+    if _metrics_collector is None:
+        _metrics_collector = MetricsCollector()
     return _metrics_collector
 
 
-def increment_counter(name: str, value: float = 1.0, tags: Optional[Dict[str, str]] = None) -> None:
-    """Increment a counter metric using the global collector."""
-    _metrics_collector.increment_counter(name, value, tags)
-
-
-def set_gauge(name: str, value: float, tags: Optional[Dict[str, str]] = None) -> None:
-    """Set a gauge metric using the global collector."""
-    _metrics_collector.set_gauge(name, value, tags)
-
-
-def record_histogram(name: str, value: float, tags: Optional[Dict[str, str]] = None) -> None:
-    """Record a histogram metric using the global collector."""
-    _metrics_collector.record_histogram(name, value, tags)
-
-
-def record_timing(name: str, duration_ms: float, tags: Optional[Dict[str, str]] = None) -> None:
-    """Record a timing metric using the global collector."""
-    _metrics_collector.record_timing(name, duration_ms, tags)
+def setup_metrics(registry: Optional[CollectorRegistry] = None) -> MetricsCollector:
+    """Set up the global metrics collector."""
+    global _metrics_collector
+    _metrics_collector = MetricsCollector(registry)
+    return _metrics_collector

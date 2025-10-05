@@ -1,0 +1,132 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "Capibara Core - Overview",
+    "tags": ["capibara", "monitoring"],
+    "style": "dark",
+    "timezone": "browser",
+    "refresh": "5s",
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "panels": [
+      {
+        "id": 1,
+        "title": "Script Generations",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "rate(capibara_script_generations_total[5m])",
+            "legendFormat": "{{language}} - {{provider}}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 6, "x": 0, "y": 0}
+      },
+      {
+        "id": 2,
+        "title": "Script Executions",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "rate(capibara_script_executions_total[5m])",
+            "legendFormat": "{{language}}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 6, "x": 6, "y": 0}
+      },
+      {
+        "id": 3,
+        "title": "Cache Hit Rate",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "rate(capibara_cache_operations_total{operation=\"get\", result=\"hit\"}[5m]) / rate(capibara_cache_operations_total{operation=\"get\"}[5m]) * 100",
+            "legendFormat": "Hit Rate %"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 6, "x": 12, "y": 0}
+      },
+      {
+        "id": 4,
+        "title": "Security Violations",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "rate(capibara_security_violations_total[5m])",
+            "legendFormat": "{{rule_name}} - {{severity}}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 6, "x": 18, "y": 0}
+      },
+      {
+        "id": 5,
+        "title": "Script Generation Duration",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(capibara_script_generation_duration_seconds_bucket[5m]))",
+            "legendFormat": "95th percentile"
+          },
+          {
+            "expr": "histogram_quantile(0.50, rate(capibara_script_generation_duration_seconds_bucket[5m]))",
+            "legendFormat": "50th percentile"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8}
+      },
+      {
+        "id": 6,
+        "title": "Script Execution Duration",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(capibara_script_execution_duration_seconds_bucket[5m]))",
+            "legendFormat": "95th percentile"
+          },
+          {
+            "expr": "histogram_quantile(0.50, rate(capibara_script_execution_duration_seconds_bucket[5m]))",
+            "legendFormat": "50th percentile"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8}
+      },
+      {
+        "id": 7,
+        "title": "LLM Requests",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(capibara_llm_requests_total[5m])",
+            "legendFormat": "{{provider}} - {{model}}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16}
+      },
+      {
+        "id": 8,
+        "title": "Active Containers",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "capibara_active_containers",
+            "legendFormat": "Active Containers"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16}
+      },
+      {
+        "id": 9,
+        "title": "Health Status",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "capibara_health_check_status",
+            "legendFormat": "{{component}}"
+          }
+        ],
+        "gridPos": {"h": 4, "w": 24, "x": 0, "y": 24}
+      }
+    ]
+  }
+}
