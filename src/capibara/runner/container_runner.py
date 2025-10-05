@@ -131,36 +131,31 @@ class ContainerRunner:
         else:
             image = "alpine:latest"
 
-        # Create container configuration
-        container_config = {
-            "image": image,
-            "working_dir": "/workspace",
-            "user": "nobody",
-            "environment": {
-                "PYTHONUNBUFFERED": "1",
-            },
-            "volumes": [f"{workspace}:/workspace:ro"],
-            "security_opt": [
-                "no-new-privileges:true",
-            ],
-            "cap_drop": ["ALL"],
-            "network_mode": "none",
-            "read_only": True,
-            "mem_limit": f"{resource_limits.memory_mb}m",
-            "memswap_limit": f"{resource_limits.memory_mb}m",
-            "cpu_period": 100000,
-            "cpu_quota": int(resource_limits.cpu_time_seconds * 100000),
-        }
-
         # Add seccomp profile if available (skip for now to avoid errors)
         # seccomp_profile = self._get_seccomp_profile(security_policy)
         # if seccomp_profile:
-        #     container_config["security_opt"].append(f"seccomp={seccomp_profile}")
+        #     security_opts = ["no-new-privileges:true", f"seccomp={seccomp_profile}"]
+        # else:
+        security_opts = ["no-new-privileges:true"]
 
         # Create and start container
         container = self.docker_client.containers.create(
-            **container_config,
+            image=image,
             command=self._get_execution_command(language),
+            working_dir="/workspace",
+            user="nobody",
+            environment={
+                "PYTHONUNBUFFERED": "1",
+            },
+            volumes=[f"{workspace}:/workspace:ro"],
+            security_opt=security_opts,
+            cap_drop=["ALL"],
+            network_mode="none",
+            read_only=True,
+            mem_limit=f"{resource_limits.memory_mb}m",
+            memswap_limit=f"{resource_limits.memory_mb}m",
+            cpu_period=100000,
+            cpu_quota=int(resource_limits.cpu_time_seconds * 100000),
         )
 
         container.start()
