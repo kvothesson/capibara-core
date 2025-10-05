@@ -1,6 +1,7 @@
 """Sandbox configuration for secure script execution."""
 
-from typing import Any, Dict, List, Optional
+from typing import Any
+
 from pydantic import BaseModel, Field
 
 from capibara.models.manifests import ResourceLimits
@@ -11,62 +12,76 @@ logger = get_logger(__name__)
 
 class SandboxConfig(BaseModel):
     """Configuration for sandboxed script execution."""
-    
+
     # Container settings
-    container_runtime: str = Field("docker", description="Container runtime (docker, podman)")
+    container_runtime: str = Field(
+        "docker", description="Container runtime (docker, podman)"
+    )
     base_image: str = Field("python:3.11-slim", description="Base container image")
-    working_directory: str = Field("/workspace", description="Working directory in container")
+    working_directory: str = Field(
+        "/workspace", description="Working directory in container"
+    )
     user: str = Field("nobody", description="User to run as in container")
-    
+
     # Environment
-    environment: Dict[str, str] = Field(default_factory=dict, description="Environment variables")
-    volumes: List[str] = Field(default_factory=list, description="Volume mounts")
-    
+    environment: dict[str, str] = Field(
+        default_factory=dict, description="Environment variables"
+    )
+    volumes: list[str] = Field(default_factory=list, description="Volume mounts")
+
     # Security settings
-    security_opt: List[str] = Field(default_factory=list, description="Security options")
-    cap_drop: List[str] = Field(default_factory=list, description="Capabilities to drop")
-    cap_add: List[str] = Field(default_factory=list, description="Capabilities to add")
-    seccomp_profile: Optional[str] = Field(None, description="Seccomp profile path")
-    apparmor_profile: Optional[str] = Field(None, description="AppArmor profile name")
-    
+    security_opt: list[str] = Field(
+        default_factory=list, description="Security options"
+    )
+    cap_drop: list[str] = Field(
+        default_factory=list, description="Capabilities to drop"
+    )
+    cap_add: list[str] = Field(default_factory=list, description="Capabilities to add")
+    seccomp_profile: str | None = Field(None, description="Seccomp profile path")
+    apparmor_profile: str | None = Field(None, description="AppArmor profile name")
+
     # Network settings
     network_mode: str = Field("none", description="Network mode")
-    
+
     # Filesystem settings
     read_only: bool = Field(True, description="Whether filesystem is read-only")
-    
+
     # Resource limits
-    resource_limits: ResourceLimits = Field(default_factory=ResourceLimits, description="Resource limits")
-    
+    resource_limits: ResourceLimits = Field(
+        default_factory=ResourceLimits, description="Resource limits"
+    )
+
     # Additional configuration
-    metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional configuration")
+    metadata: dict[str, Any] = Field(
+        default_factory=dict, description="Additional configuration"
+    )
 
 
 class SandboxConfigManager:
     """Manages sandbox configurations for different security levels."""
-    
+
     def __init__(self):
-        self.configs: Dict[str, SandboxConfig] = {}
+        self.configs: dict[str, SandboxConfig] = {}
         self._load_default_configs()
-    
+
     def get_config(self, security_level: str = "moderate") -> SandboxConfig:
         """Get sandbox configuration for a security level."""
         if security_level in self.configs:
             logger.debug("Using sandbox config", level=security_level)
             return self.configs[security_level]
-        
+
         logger.warning("Unknown security level, using moderate", level=security_level)
         return self.configs.get("moderate", self._create_basic_config())
-    
+
     def add_config(self, name: str, config: SandboxConfig) -> None:
         """Add a custom sandbox configuration."""
         self.configs[name] = config
         logger.info("Sandbox config added", name=name)
-    
-    def list_configs(self) -> List[str]:
+
+    def list_configs(self) -> list[str]:
         """List available sandbox configurations."""
         return list(self.configs.keys())
-    
+
     def _load_default_configs(self) -> None:
         """Load default sandbox configurations."""
         # Strict configuration
@@ -100,7 +115,7 @@ class SandboxConfigManager:
                 allow_subprocess=False,
             ),
         )
-        
+
         # Moderate configuration
         moderate_config = SandboxConfig(
             container_runtime="docker",
@@ -132,7 +147,7 @@ class SandboxConfigManager:
                 allow_subprocess=False,
             ),
         )
-        
+
         # Permissive configuration
         permissive_config = SandboxConfig(
             container_runtime="docker",
@@ -164,14 +179,14 @@ class SandboxConfigManager:
                 allow_subprocess=False,
             ),
         )
-        
+
         # Add configurations
         self.configs["strict"] = strict_config
         self.configs["moderate"] = moderate_config
         self.configs["permissive"] = permissive_config
-        
+
         logger.info("Default sandbox configs loaded", count=len(self.configs))
-    
+
     def _create_basic_config(self) -> SandboxConfig:
         """Create a basic sandbox configuration as fallback."""
         return SandboxConfig(
@@ -199,8 +214,8 @@ class SandboxConfigManager:
                 allow_subprocess=False,
             ),
         )
-    
-    def create_docker_config(self, config: SandboxConfig) -> Dict[str, Any]:
+
+    def create_docker_config(self, config: SandboxConfig) -> dict[str, Any]:
         """Create Docker configuration from sandbox config."""
         docker_config = {
             "image": config.base_image,
@@ -218,18 +233,18 @@ class SandboxConfigManager:
             "cpu_period": 100000,
             "cpu_quota": int(config.resource_limits.cpu_time_seconds * 100000),
         }
-        
+
         # Add seccomp profile if specified
         if config.seccomp_profile:
             docker_config["security_opt"].append(f"seccomp={config.seccomp_profile}")
-        
+
         # Add AppArmor profile if specified
         if config.apparmor_profile:
             docker_config["security_opt"].append(f"apparmor={config.apparmor_profile}")
-        
+
         return docker_config
-    
-    def create_podman_config(self, config: SandboxConfig) -> Dict[str, Any]:
+
+    def create_podman_config(self, config: SandboxConfig) -> dict[str, Any]:
         """Create Podman configuration from sandbox config."""
         podman_config = {
             "image": config.base_image,
@@ -242,16 +257,18 @@ class SandboxConfigManager:
             "cap_add": config.cap_add,
             "network": config.network_mode,
             "read_only": config.read_only,
-            "memory": config.resource_limits.memory_mb * 1024 * 1024,  # Convert to bytes
+            "memory": config.resource_limits.memory_mb
+            * 1024
+            * 1024,  # Convert to bytes
             "cpus": config.resource_limits.cpu_time_seconds,
         }
-        
+
         # Add seccomp profile if specified
         if config.seccomp_profile:
             podman_config["security_opt"].append(f"seccomp={config.seccomp_profile}")
-        
+
         # Add AppArmor profile if specified
         if config.apparmor_profile:
             podman_config["security_opt"].append(f"apparmor={config.apparmor_profile}")
-        
+
         return podman_config

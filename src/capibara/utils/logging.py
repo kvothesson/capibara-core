@@ -3,7 +3,7 @@
 import logging
 import sys
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 import structlog
 from structlog.stdlib import LoggerFactory
@@ -19,7 +19,7 @@ structlog.configure(
         structlog.processors.StackInfoRenderer(),
         structlog.processors.format_exc_info,
         structlog.processors.UnicodeDecoder(),
-        structlog.processors.JSONRenderer()
+        structlog.processors.JSONRenderer(),
     ],
     context_class=dict,
     logger_factory=LoggerFactory(),
@@ -35,29 +35,29 @@ def get_logger(name: str) -> structlog.BoundLogger:
 
 def setup_logging(
     level: str = "INFO",
-    log_file: Optional[str] = None,
+    log_file: str | None = None,
     log_format: str = "json",
-    **kwargs: Any
+    **kwargs: Any,
 ) -> None:
     """Set up logging configuration."""
     # Convert string level to logging constant
     numeric_level = getattr(logging, level.upper(), logging.INFO)
-    
+
     # Configure root logger
     logging.basicConfig(
         level=numeric_level,
         format="%(message)s",
         stream=sys.stdout,
     )
-    
+
     # Add file handler if specified
     if log_file:
         log_path = Path(log_file)
         log_path.parent.mkdir(parents=True, exist_ok=True)
-        
+
         file_handler = logging.FileHandler(log_path)
         file_handler.setLevel(numeric_level)
-        
+
         if log_format == "json":
             file_handler.setFormatter(logging.Formatter("%(message)s"))
         else:
@@ -66,9 +66,9 @@ def setup_logging(
                     "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
                 )
             )
-        
+
         logging.getLogger().addHandler(file_handler)
-    
+
     # Configure structlog based on format
     if log_format == "json":
         processors = [
@@ -80,7 +80,7 @@ def setup_logging(
             structlog.processors.StackInfoRenderer(),
             structlog.processors.format_exc_info,
             structlog.processors.UnicodeDecoder(),
-            structlog.processors.JSONRenderer()
+            structlog.processors.JSONRenderer(),
         ]
     else:
         processors = [
@@ -92,9 +92,9 @@ def setup_logging(
             structlog.processors.StackInfoRenderer(),
             structlog.processors.format_exc_info,
             structlog.processors.UnicodeDecoder(),
-            structlog.dev.ConsoleRenderer(colors=True)
+            structlog.dev.ConsoleRenderer(colors=True),
         ]
-    
+
     structlog.configure(
         processors=processors,
         context_class=dict,
@@ -106,7 +106,7 @@ def setup_logging(
 
 class LoggerMixin:
     """Mixin class to add logging capabilities to any class."""
-    
+
     @property
     def logger(self) -> structlog.BoundLogger:
         """Get logger for this class."""

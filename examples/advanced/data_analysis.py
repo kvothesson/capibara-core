@@ -8,6 +8,7 @@ for data analysis tasks with CSV processing and visualization.
 
 import asyncio
 import os
+
 from capibara import CapibaraClient
 
 
@@ -15,13 +16,13 @@ async def main():
     """Main example function."""
     # Initialize Capibara client
     client = CapibaraClient(
-        openai_api_key=os.getenv('OPENAI_API_KEY'),
-        groq_api_key=os.getenv('GROQ_API_KEY'),
+        openai_api_key=os.getenv("OPENAI_API_KEY"),
+        groq_api_key=os.getenv("GROQ_API_KEY"),
     )
-    
+
     # Example 1: CSV Data Processing
     print("=== CSV Data Processing Example ===")
-    
+
     csv_response = await client.run(
         prompt="""
         Create a Python script that:
@@ -38,16 +39,16 @@ async def main():
         },
         security_policy="moderate",
     )
-    
+
     print(f"CSV Processing Script ID: {csv_response.script_id}")
     print("\nGenerated Code:")
     print("-" * 50)
     print(csv_response.code)
     print("-" * 50)
-    
+
     # Example 2: API Integration
     print("\n=== API Integration Example ===")
-    
+
     api_response = await client.run(
         prompt="""
         Create a Python script that:
@@ -63,16 +64,16 @@ async def main():
         },
         security_policy="permissive",  # Allow network access
     )
-    
+
     print(f"API Integration Script ID: {api_response.script_id}")
     print("\nGenerated Code:")
     print("-" * 50)
     print(api_response.code)
     print("-" * 50)
-    
+
     # Example 3: Data Visualization
     print("\n=== Data Visualization Example ===")
-    
+
     viz_response = await client.run(
         prompt="""
         Create a Python script that:
@@ -85,20 +86,22 @@ async def main():
         language="python",
         security_policy="moderate",
     )
-    
+
     print(f"Data Visualization Script ID: {viz_response.script_id}")
     print("\nGenerated Code:")
     print("-" * 50)
     print(viz_response.code)
     print("-" * 50)
-    
+
     # List all generated scripts
     print("\n=== Generated Scripts ===")
     scripts = await client.list_scripts(limit=10)
-    
+
     print(f"Total scripts: {scripts.total_count}")
     for script in scripts.scripts:
-        print(f"- {script.script_id[:12]}... ({script.language}) - {script.prompt[:50]}...")
+        print(
+            f"- {script.script_id[:12]}... ({script.language}) - {script.prompt[:50]}..."
+        )
 
 
 if __name__ == "__main__":

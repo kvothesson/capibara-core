@@ -1,19 +1,24 @@
 """Main SDK client for Capibara Core."""
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
-from capibara.models.requests import RunRequest, ListRequest, ShowRequest, ClearRequest
-from capibara.models.responses import RunResponse, ListResponse, ShowResponse, ClearResponse
-from capibara.core.engine import CapibaraEngine
 from capibara.core.cache_manager import CacheManager
+from capibara.core.engine import CapibaraEngine
 from capibara.core.script_generator import ScriptGenerator
+from capibara.llm_providers.base import LLMProviderConfig
+from capibara.llm_providers.fallback_manager import FallbackManager
+from capibara.llm_providers.groq_provider import GroqProvider
+from capibara.llm_providers.openai_provider import OpenAIProvider
+from capibara.models.requests import ClearRequest, ListRequest, RunRequest
+from capibara.models.responses import (
+    ClearResponse,
+    ListResponse,
+    RunResponse,
+    ShowResponse,
+)
+from capibara.runner.container_runner import ContainerRunner
 from capibara.security.ast_scanner import ASTScanner
 from capibara.security.policy_manager import PolicyManager
-from capibara.runner.container_runner import ContainerRunner
-from capibara.llm_providers.fallback_manager import FallbackManager
-from capibara.llm_providers.openai_provider import OpenAIProvider
-from capibara.llm_providers.groq_provider import GroqProvider
-from capibara.llm_providers.base import LLMProviderConfig
 from capibara.utils.logging import get_logger
 
 logger = get_logger(__name__)
@@ -21,41 +26,41 @@ logger = get_logger(__name__)
 
 class CapibaraClient:
     """Main client for interacting with Capibara Core."""
-    
+
     def __init__(
         self,
-        openai_api_key: Optional[str] = None,
-        groq_api_key: Optional[str] = None,
+        openai_api_key: str | None = None,
+        groq_api_key: str | None = None,
         cache_dir: str = "~/.capibara/cache",
         policies_dir: str = "config/security-policies",
     ):
         self.cache_dir = cache_dir
         self.policies_dir = policies_dir
-        
+
         # Initialize components
         self._initialize_components(openai_api_key, groq_api_key)
-        
+
         logger.info("Capibara client initialized")
-    
+
     def _initialize_components(
         self,
-        openai_api_key: Optional[str],
-        groq_api_key: Optional[str],
+        openai_api_key: str | None,
+        groq_api_key: str | None,
     ) -> None:
         """Initialize all Capibara components."""
         # Cache manager
         self.cache_manager = CacheManager(cache_dir=self.cache_dir)
-        
+
         # Security components
         self.ast_scanner = ASTScanner()
         self.policy_manager = PolicyManager(policies_dir=self.policies_dir)
-        
+
         # Container runner
         self.container_runner = ContainerRunner()
-        
+
         # LLM providers
         providers = []
-        
+
         if openai_api_key:
             openai_config = LLMProviderConfig(
                 name="openai",
@@ -63,7 +68,7 @@ class CapibaraClient:
                 model="gpt-3.5-turbo",
             )
             providers.append(OpenAIProvider(openai_config))
-        
+
         if groq_api_key:
             groq_config = LLMProviderConfig(
                 name="groq",
@@ -71,15 +76,15 @@ class CapibaraClient:
                 model="llama-3.3-70b-versatile",
             )
             providers.append(GroqProvider(groq_config))
-        
+
         if not providers:
             raise ValueError("At least one LLM provider API key must be provided")
-        
+
         self.fallback_manager = FallbackManager(providers)
-        
+
         # Script generator
         self.script_generator = ScriptGenerator(self.fallback_manager)
-        
+
         # Main engine
         self.engine = CapibaraEngine(
             cache_manager=self.cache_manager,
@@ -89,20 +94,20 @@ class CapibaraClient:
             container_runner=self.container_runner,
             fallback_manager=self.fallback_manager,
         )
-    
+
     async def run(
         self,
         prompt: str,
         language: str = "python",
-        context: Optional[Dict[str, Any]] = None,
-        security_policy: Optional[str] = None,
-        llm_provider: Optional[str] = None,
+        context: dict[str, Any] | None = None,
+        security_policy: str | None = None,
+        llm_provider: str | None = None,
         execute: bool = False,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> RunResponse:
         """Generate and optionally execute a script from a natural language prompt."""
         logger.info("Running script generation", prompt_length=len(prompt))
-        
+
         request = RunRequest(
             prompt=prompt,
             context=context,
@@ -110,23 +115,23 @@ class CapibaraClient:
             security_policy=security_policy,
             llm_provider=llm_provider,
             execute=execute,
-            **kwargs
+            **kwargs,
         )
-        
+
         return await self.engine.run_script(request)
-    
+
     async def list_scripts(
         self,
         limit: int = 50,
         offset: int = 0,
-        language: Optional[str] = None,
-        search: Optional[str] = None,
+        language: str | None = None,
+        search: str | None = None,
         sort_by: str = "created_at",
         sort_order: str = "desc",
     ) -> ListResponse:
         """List cached scripts."""
         logger.info("Listing scripts", limit=limit, offset=offset)
-        
+
         request = ListRequest(
             limit=limit,
             offset=offset,
@@ -135,7 +140,7 @@ class CapibaraClient:
             sort_by=sort_by,
             sort_order=sort_order,
         )
-        
+
         scripts = await self.cache_manager.list_scripts(
             limit=request.limit,
             offset=request.offset,
@@ -144,7 +149,7 @@ class CapibaraClient:
             sort_by=request.sort_by,
             sort_order=request.sort_order,
         )
-        
+
         return ListResponse(
             scripts=scripts,
             total_count=len(scripts),  # Simplified - would need proper counting
@@ -152,7 +157,7 @@ class CapibaraClient:
             offset=request.offset,
             has_more=len(scripts) == request.limit,
         )
-    
+
     async def show_script(
         self,
         script_id: str,
@@ -161,64 +166,60 @@ class CapibaraClient:
     ) -> ShowResponse:
         """Show details of a specific script."""
         logger.info("Showing script", script_id=script_id)
-        
-        request = ShowRequest(
-            script_id=script_id,
-            include_code=include_code,
-            include_execution_logs=include_execution_logs,
-        )
-        
+
         # Get script from cache
         script = await self.cache_manager.get_script(script_id)
         if not script:
             raise ValueError(f"Script not found: {script_id}")
-        
+
         return ShowResponse(
             script=script,
             code=script.get("code") if include_code else None,
             execution_logs=None,  # Would need to implement execution log storage
         )
-    
+
     async def clear_cache(
         self,
-        script_ids: Optional[List[str]] = None,
-        language: Optional[str] = None,
-        older_than: Optional[int] = None,
+        script_ids: list[str] | None = None,
+        language: str | None = None,
+        older_than: int | None = None,
         all_scripts: bool = False,
     ) -> ClearResponse:
         """Clear cache or specific scripts."""
-        logger.info("Clearing cache", 
-                   script_ids=script_ids,
-                   language=language,
-                   all_scripts=all_scripts)
-        
+        logger.info(
+            "Clearing cache",
+            script_ids=script_ids,
+            language=language,
+            all_scripts=all_scripts,
+        )
+
         request = ClearRequest(
             script_ids=script_ids,
             language=language,
             older_than=older_than,
             all=all_scripts,
         )
-        
+
         cleared_count = await self.cache_manager.clear_scripts(
             script_ids=request.script_ids,
             language=request.language,
             older_than=request.older_than,
             all_scripts=request.all,
         )
-        
+
         return ClearResponse(
             cleared_count=cleared_count,
             cleared_script_ids=script_ids or [],
             total_size_freed_bytes=0,  # Would need to calculate
         )
-    
-    async def health_check(self) -> Dict[str, Any]:
+
+    async def health_check(self) -> dict[str, Any]:
         """Check health of all components."""
         health_status = {
             "overall": True,
             "components": {},
         }
-        
+
         # Check cache manager
         try:
             cache_stats = self.cache_manager.get_cache_stats()
@@ -232,7 +233,7 @@ class CapibaraClient:
                 "error": str(e),
             }
             health_status["overall"] = False
-        
+
         # Check LLM providers
         try:
             provider_stats = self.fallback_manager.get_provider_stats()
@@ -246,7 +247,7 @@ class CapibaraClient:
                 "error": str(e),
             }
             health_status["overall"] = False
-        
+
         # Check container runner
         try:
             container_healthy = await self.container_runner.health_check()
@@ -259,10 +260,10 @@ class CapibaraClient:
                 "error": str(e),
             }
             health_status["overall"] = False
-        
+
         return health_status
-    
-    def get_stats(self) -> Dict[str, Any]:
+
+    def get_stats(self) -> dict[str, Any]:
         """Get statistics for all components."""
         return {
             "cache": self.cache_manager.get_cache_stats(),

@@ -1,14 +1,15 @@
 """Pytest configuration and shared fixtures."""
 
-import pytest
 import asyncio
+from datetime import UTC, datetime
 from unittest.mock import Mock
-from datetime import datetime, timezone
 
+import pytest
+
+from capibara.models.manifests import ResourceLimits, SecurityPolicy, SecurityRule
 from capibara.models.requests import RunRequest
 from capibara.models.responses import RunResponse
 from capibara.models.security import SecurityScanResult, SecurityViolation
-from capibara.models.manifests import SecurityPolicy, SecurityRule, ResourceLimits
 
 
 @pytest.fixture(scope="session")
@@ -28,7 +29,7 @@ def sample_run_request():
         execute=False,
         security_policy="moderate",
         llm_provider="openai",
-        context={"test": "data"}
+        context={"test": "data"},
     )
 
 
@@ -45,8 +46,8 @@ def sample_run_response():
         security_policy="moderate",
         llm_provider="openai",
         fingerprint="test_fingerprint_123",
-        created_at=datetime.now(timezone.utc),
-        metadata={"test": "metadata"}
+        created_at=datetime.now(UTC),
+        metadata={"test": "metadata"},
     )
 
 
@@ -60,7 +61,7 @@ def sample_security_violation():
         message="Dangerous import detected: os",
         pattern_matched="import os",
         line_number=1,
-        code_snippet="import os"
+        code_snippet="import os",
     )
 
 
@@ -73,7 +74,7 @@ def sample_security_scan_result():
         violations=[],
         passed=True,
         scan_duration_ms=10,
-        rules_applied=["test_rule"]
+        rules_applied=["test_rule"],
     )
 
 
@@ -89,7 +90,7 @@ def sample_security_policy():
                 description="Test rule",
                 pattern=r"test_pattern",
                 severity="error",
-                action="block"
+                action="block",
             )
         ],
         blocked_imports=["dangerous_module"],
@@ -103,8 +104,8 @@ def sample_security_policy():
             max_file_size_mb=5,
             max_files=50,
             network_access=False,
-            allow_subprocess=False
-        )
+            allow_subprocess=False,
+        ),
     )
 
 
@@ -135,14 +136,16 @@ def mock_script_generator():
 def mock_ast_scanner():
     """Create a mock AST scanner."""
     scanner = Mock()
-    scanner.scan = Mock(return_value=SecurityScanResult(
-        scan_id="test_scan",
-        script_id="",
-        violations=[],
-        passed=True,
-        scan_duration_ms=10,
-        rules_applied=["test_rule"]
-    ))
+    scanner.scan = Mock(
+        return_value=SecurityScanResult(
+            scan_id="test_scan",
+            script_id="",
+            violations=[],
+            passed=True,
+            scan_duration_ms=10,
+            rules_applied=["test_rule"],
+        )
+    )
     return scanner
 
 
@@ -158,7 +161,7 @@ def mock_policy_manager():
         blocked_functions=[],
         allowed_imports=[],
         allowed_functions=[],
-        resource_limits=ResourceLimits()
+        resource_limits=ResourceLimits(),
     )
     manager.get_policy = Mock(return_value=policy)
     return manager

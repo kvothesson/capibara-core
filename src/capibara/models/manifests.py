@@ -1,103 +1,160 @@
 """Manifest models for configuration and policies."""
 
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
+
 from pydantic import BaseModel, Field, field_validator
 
 
 class ResourceLimits(BaseModel):
     """Resource limits for script execution."""
-    
-    cpu_time_seconds: int = Field(30, ge=1, le=300, description="Maximum CPU time in seconds")
+
+    cpu_time_seconds: int = Field(
+        30, ge=1, le=300, description="Maximum CPU time in seconds"
+    )
     memory_mb: int = Field(512, ge=64, le=2048, description="Maximum memory in MB")
-    execution_time_seconds: int = Field(60, ge=1, le=600, description="Maximum wall clock time in seconds")
-    max_file_size_mb: int = Field(10, ge=1, le=100, description="Maximum file size for I/O operations")
-    max_files: int = Field(100, ge=1, le=1000, description="Maximum number of files that can be created")
+    execution_time_seconds: int = Field(
+        60, ge=1, le=600, description="Maximum wall clock time in seconds"
+    )
+    max_file_size_mb: int = Field(
+        10, ge=1, le=100, description="Maximum file size for I/O operations"
+    )
+    max_files: int = Field(
+        100, ge=1, le=1000, description="Maximum number of files that can be created"
+    )
     network_access: bool = Field(False, description="Whether network access is allowed")
-    allow_subprocess: bool = Field(False, description="Whether subprocess execution is allowed")
+    allow_subprocess: bool = Field(
+        False, description="Whether subprocess execution is allowed"
+    )
 
 
 class SecurityRule(BaseModel):
     """Individual security rule."""
-    
+
     name: str = Field(..., description="Rule name")
     description: str = Field(..., description="Rule description")
     pattern: str = Field(..., description="Regex pattern to match")
     severity: str = Field("error", description="Severity level (error, warning, info)")
     action: str = Field("block", description="Action to take (block, warn, allow)")
-    language: Optional[str] = Field(None, description="Specific language this applies to")
-    
-    @field_validator('severity')
+    language: str | None = Field(None, description="Specific language this applies to")
+
+    @field_validator("severity")
     @classmethod
     def validate_severity(cls, v: str) -> str:
-        if v not in {'error', 'warning', 'info'}:
+        if v not in {"error", "warning", "info"}:
             raise ValueError("Severity must be 'error', 'warning', or 'info'")
         return v
-    
-    @field_validator('action')
+
+    @field_validator("action")
     @classmethod
     def validate_action(cls, v: str) -> str:
-        if v not in {'block', 'warn', 'allow'}:
+        if v not in {"block", "warn", "allow"}:
             raise ValueError("Action must be 'block', 'warn', or 'allow'")
         return v
 
 
 class SecurityPolicy(BaseModel):
     """Security policy configuration."""
-    
+
     name: str = Field(..., description="Policy name")
     description: str = Field(..., description="Policy description")
     version: str = Field("1.0", description="Policy version")
-    rules: List[SecurityRule] = Field(..., description="Security rules")
-    resource_limits: ResourceLimits = Field(default_factory=ResourceLimits, description="Resource limits")
-    allowed_imports: List[str] = Field(default_factory=list, description="Allowed import patterns")
-    blocked_imports: List[str] = Field(default_factory=list, description="Blocked import patterns")
-    allowed_functions: List[str] = Field(default_factory=list, description="Allowed function patterns")
-    blocked_functions: List[str] = Field(default_factory=list, description="Blocked function patterns")
-    metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
+    rules: list[SecurityRule] = Field(..., description="Security rules")
+    resource_limits: ResourceLimits = Field(
+        default_factory=ResourceLimits, description="Resource limits"
+    )
+    allowed_imports: list[str] = Field(
+        default_factory=list, description="Allowed import patterns"
+    )
+    blocked_imports: list[str] = Field(
+        default_factory=list, description="Blocked import patterns"
+    )
+    allowed_functions: list[str] = Field(
+        default_factory=list, description="Allowed function patterns"
+    )
+    blocked_functions: list[str] = Field(
+        default_factory=list, description="Blocked function patterns"
+    )
+    metadata: dict[str, Any] = Field(
+        default_factory=dict, description="Additional metadata"
+    )
 
 
 class LLMProviderConfig(BaseModel):
     """Configuration for an LLM provider."""
-    
+
     name: str = Field(..., description="Provider name")
     type: str = Field(..., description="Provider type (openai, groq, etc.)")
-    api_key: Optional[str] = Field(None, description="API key (if required)")
-    base_url: Optional[str] = Field(None, description="Base URL for API")
+    api_key: str | None = Field(None, description="API key (if required)")
+    base_url: str | None = Field(None, description="Base URL for API")
     model: str = Field(..., description="Model name to use")
-    max_tokens: int = Field(4000, ge=100, le=32000, description="Maximum tokens to generate")
+    max_tokens: int = Field(
+        4000, ge=100, le=32000, description="Maximum tokens to generate"
+    )
     temperature: float = Field(0.7, ge=0.0, le=2.0, description="Sampling temperature")
-    timeout_seconds: int = Field(30, ge=5, le=300, description="Request timeout in seconds")
+    timeout_seconds: int = Field(
+        30, ge=5, le=300, description="Request timeout in seconds"
+    )
     retry_attempts: int = Field(3, ge=0, le=10, description="Number of retry attempts")
-    priority: int = Field(1, ge=1, le=10, description="Priority for fallback (lower = higher priority)")
+    priority: int = Field(
+        1, ge=1, le=10, description="Priority for fallback (lower = higher priority)"
+    )
     enabled: bool = Field(True, description="Whether provider is enabled")
-    metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional configuration")
+    metadata: dict[str, Any] = Field(
+        default_factory=dict, description="Additional configuration"
+    )
 
 
 class ExecutionConfig(BaseModel):
     """Execution configuration."""
-    
-    container_runtime: str = Field("docker", description="Container runtime (docker, podman)")
+
+    container_runtime: str = Field(
+        "docker", description="Container runtime (docker, podman)"
+    )
     base_image: str = Field("python:3.11-slim", description="Base container image")
-    working_directory: str = Field("/workspace", description="Working directory in container")
+    working_directory: str = Field(
+        "/workspace", description="Working directory in container"
+    )
     user: str = Field("nobody", description="User to run as in container")
-    environment: Dict[str, str] = Field(default_factory=dict, description="Environment variables")
-    volumes: List[str] = Field(default_factory=list, description="Volume mounts")
-    security_opt: List[str] = Field(default_factory=list, description="Security options")
-    cap_drop: List[str] = Field(default_factory=list, description="Capabilities to drop")
-    cap_add: List[str] = Field(default_factory=list, description="Capabilities to add")
-    seccomp_profile: Optional[str] = Field(None, description="Seccomp profile path")
-    apparmor_profile: Optional[str] = Field(None, description="AppArmor profile name")
-    metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional configuration")
+    environment: dict[str, str] = Field(
+        default_factory=dict, description="Environment variables"
+    )
+    volumes: list[str] = Field(default_factory=list, description="Volume mounts")
+    security_opt: list[str] = Field(
+        default_factory=list, description="Security options"
+    )
+    cap_drop: list[str] = Field(
+        default_factory=list, description="Capabilities to drop"
+    )
+    cap_add: list[str] = Field(default_factory=list, description="Capabilities to add")
+    seccomp_profile: str | None = Field(None, description="Seccomp profile path")
+    apparmor_profile: str | None = Field(None, description="AppArmor profile name")
+    metadata: dict[str, Any] = Field(
+        default_factory=dict, description="Additional configuration"
+    )
 
 
 class CapibaraConfig(BaseModel):
     """Main Capibara configuration."""
-    
+
     version: str = Field("1.0", description="Configuration version")
-    llm_providers: List[LLMProviderConfig] = Field(..., description="LLM provider configurations")
-    security_policies: List[SecurityPolicy] = Field(..., description="Security policies")
-    execution: ExecutionConfig = Field(default_factory=ExecutionConfig, description="Execution configuration")
-    cache: Dict[str, Any] = Field(default_factory=dict, description="Cache configuration")
-    logging: Dict[str, Any] = Field(default_factory=dict, description="Logging configuration")
-    metrics: Dict[str, Any] = Field(default_factory=dict, description="Metrics configuration")
-    metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
+    llm_providers: list[LLMProviderConfig] = Field(
+        ..., description="LLM provider configurations"
+    )
+    security_policies: list[SecurityPolicy] = Field(
+        ..., description="Security policies"
+    )
+    execution: ExecutionConfig = Field(
+        default_factory=ExecutionConfig, description="Execution configuration"
+    )
+    cache: dict[str, Any] = Field(
+        default_factory=dict, description="Cache configuration"
+    )
+    logging: dict[str, Any] = Field(
+        default_factory=dict, description="Logging configuration"
+    )
+    metrics: dict[str, Any] = Field(
+        default_factory=dict, description="Metrics configuration"
+    )
+    metadata: dict[str, Any] = Field(
+        default_factory=dict, description="Additional metadata"
+    )

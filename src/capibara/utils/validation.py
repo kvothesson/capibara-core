@@ -1,9 +1,14 @@
 """Validation utilities for Capibara Core."""
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
-from capibara.models.requests import RunRequest, ListRequest, ShowRequest, ClearRequest
-from capibara.models.responses import RunResponse, ListResponse, ShowResponse, ClearResponse
+from capibara.models.requests import ClearRequest, ListRequest, RunRequest, ShowRequest
+from capibara.models.responses import (
+    ClearResponse,
+    ListResponse,
+    RunResponse,
+    ShowResponse,
+)
 from capibara.utils.logging import get_logger
 
 logger = get_logger(__name__)
@@ -52,43 +57,52 @@ def _validate_run_request(request: RunRequest) -> bool:
     if not request.prompt or not request.prompt.strip():
         logger.error("RunRequest validation failed: empty prompt")
         return False
-    
+
     if not request.language:
         logger.error("RunRequest validation failed: missing language")
         return False
-    
+
     # Validate language
-    supported_languages = {'python', 'javascript', 'bash', 'powershell'}
+    supported_languages = {"python", "javascript", "bash", "powershell"}
     if request.language.lower() not in supported_languages:
-        logger.error("RunRequest validation failed: unsupported language", 
-                    language=request.language)
+        logger.error(
+            "RunRequest validation failed: unsupported language",
+            language=request.language,
+        )
         return False
-    
+
     return True
 
 
 def _validate_list_request(request: ListRequest) -> bool:
     """Validate ListRequest."""
     if request.limit <= 0 or request.limit > 1000:
-        logger.error("ListRequest validation failed: invalid limit", limit=request.limit)
+        logger.error(
+            "ListRequest validation failed: invalid limit", limit=request.limit
+        )
         return False
-    
+
     if request.offset < 0:
-        logger.error("ListRequest validation failed: negative offset", offset=request.offset)
+        logger.error(
+            "ListRequest validation failed: negative offset", offset=request.offset
+        )
         return False
-    
+
     # Validate sort fields
-    valid_sort_fields = {'created_at', 'updated_at', 'execution_count', 'prompt_length'}
+    valid_sort_fields = {"created_at", "updated_at", "execution_count", "prompt_length"}
     if request.sort_by not in valid_sort_fields:
-        logger.error("ListRequest validation failed: invalid sort field", 
-                    sort_by=request.sort_by)
+        logger.error(
+            "ListRequest validation failed: invalid sort field", sort_by=request.sort_by
+        )
         return False
-    
-    if request.sort_order not in {'asc', 'desc'}:
-        logger.error("ListRequest validation failed: invalid sort order", 
-                    sort_order=request.sort_order)
+
+    if request.sort_order not in {"asc", "desc"}:
+        logger.error(
+            "ListRequest validation failed: invalid sort order",
+            sort_order=request.sort_order,
+        )
         return False
-    
+
     return True
 
 
@@ -97,7 +111,7 @@ def _validate_show_request(request: ShowRequest) -> bool:
     if not request.script_id or not request.script_id.strip():
         logger.error("ShowRequest validation failed: empty script_id")
         return False
-    
+
     return True
 
 
@@ -107,18 +121,20 @@ def _validate_clear_request(request: ClearRequest) -> bool:
     if not any([request.script_ids, request.language, request.older_than, request.all]):
         logger.error("ClearRequest validation failed: no clearing criteria specified")
         return False
-    
+
     # Validate script_ids if provided
     if request.script_ids is not None and len(request.script_ids) == 0:
         logger.error("ClearRequest validation failed: empty script_ids list")
         return False
-    
+
     # Validate older_than if provided
     if request.older_than is not None and request.older_than <= 0:
-        logger.error("ClearRequest validation failed: invalid older_than", 
-                    older_than=request.older_than)
+        logger.error(
+            "ClearRequest validation failed: invalid older_than",
+            older_than=request.older_than,
+        )
         return False
-    
+
     return True
 
 
@@ -127,27 +143,27 @@ def _validate_run_response(response: RunResponse) -> bool:
     if not response.script_id or not response.script_id.strip():
         logger.error("RunResponse validation failed: empty script_id")
         return False
-    
+
     if not response.prompt or not response.prompt.strip():
         logger.error("RunResponse validation failed: empty prompt")
         return False
-    
+
     if not response.language:
         logger.error("RunResponse validation failed: missing language")
         return False
-    
+
     if not response.code or not response.code.strip():
         logger.error("RunResponse validation failed: empty code")
         return False
-    
+
     if not response.llm_provider:
         logger.error("RunResponse validation failed: missing llm_provider")
         return False
-    
+
     if not response.fingerprint:
         logger.error("RunResponse validation failed: missing fingerprint")
         return False
-    
+
     return True
 
 
@@ -156,20 +172,26 @@ def _validate_list_response(response: ListResponse) -> bool:
     if not isinstance(response.scripts, list):
         logger.error("ListResponse validation failed: scripts must be a list")
         return False
-    
+
     if response.total_count < 0:
-        logger.error("ListResponse validation failed: negative total_count", 
-                    total_count=response.total_count)
+        logger.error(
+            "ListResponse validation failed: negative total_count",
+            total_count=response.total_count,
+        )
         return False
-    
+
     if response.limit <= 0:
-        logger.error("ListResponse validation failed: invalid limit", limit=response.limit)
+        logger.error(
+            "ListResponse validation failed: invalid limit", limit=response.limit
+        )
         return False
-    
+
     if response.offset < 0:
-        logger.error("ListResponse validation failed: negative offset", offset=response.offset)
+        logger.error(
+            "ListResponse validation failed: negative offset", offset=response.offset
+        )
         return False
-    
+
     return True
 
 
@@ -178,60 +200,75 @@ def _validate_show_response(response: ShowResponse) -> bool:
     if not response.script:
         logger.error("ShowResponse validation failed: missing script")
         return False
-    
+
     # Validate script object
-    if not hasattr(response.script, 'script_id') or not response.script.script_id:
+    if not hasattr(response.script, "script_id") or not response.script.script_id:
         logger.error("ShowResponse validation failed: script missing script_id")
         return False
-    
+
     return True
 
 
 def _validate_clear_response(response: ClearResponse) -> bool:
     """Validate ClearResponse."""
     if response.cleared_count < 0:
-        logger.error("ClearResponse validation failed: negative cleared_count", 
-                    cleared_count=response.cleared_count)
+        logger.error(
+            "ClearResponse validation failed: negative cleared_count",
+            cleared_count=response.cleared_count,
+        )
         return False
-    
+
     if not isinstance(response.cleared_script_ids, list):
-        logger.error("ClearResponse validation failed: cleared_script_ids must be a list")
+        logger.error(
+            "ClearResponse validation failed: cleared_script_ids must be a list"
+        )
         return False
-    
+
     if response.total_size_freed_bytes < 0:
-        logger.error("ClearResponse validation failed: negative total_size_freed_bytes", 
-                    total_size_freed_bytes=response.total_size_freed_bytes)
+        logger.error(
+            "ClearResponse validation failed: negative total_size_freed_bytes",
+            total_size_freed_bytes=response.total_size_freed_bytes,
+        )
         return False
-    
+
     return True
 
 
-def validate_security_policy(policy_name: str, available_policies: List[str]) -> bool:
+def validate_security_policy(policy_name: str, available_policies: list[str]) -> bool:
     """Validate that a security policy exists."""
     if policy_name and policy_name not in available_policies:
-        logger.error("Security policy validation failed: unknown policy", 
-                    policy=policy_name, available=available_policies)
+        logger.error(
+            "Security policy validation failed: unknown policy",
+            policy=policy_name,
+            available=available_policies,
+        )
         return False
-    
+
     return True
 
 
-def validate_llm_provider(provider_name: str, available_providers: List[str]) -> bool:
+def validate_llm_provider(provider_name: str, available_providers: list[str]) -> bool:
     """Validate that an LLM provider exists."""
     if provider_name and provider_name not in available_providers:
-        logger.error("LLM provider validation failed: unknown provider", 
-                    provider=provider_name, available=available_providers)
+        logger.error(
+            "LLM provider validation failed: unknown provider",
+            provider=provider_name,
+            available=available_providers,
+        )
         return False
-    
+
     return True
 
 
 def validate_language(language: str) -> bool:
     """Validate programming language."""
-    supported_languages = {'python', 'javascript', 'bash', 'powershell'}
+    supported_languages = {"python", "javascript", "bash", "powershell"}
     if language.lower() not in supported_languages:
-        logger.error("Language validation failed: unsupported language", 
-                    language=language, supported=supported_languages)
+        logger.error(
+            "Language validation failed: unsupported language",
+            language=language,
+            supported=supported_languages,
+        )
         return False
-    
+
     return True
