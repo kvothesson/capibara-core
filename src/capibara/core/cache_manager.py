@@ -3,7 +3,7 @@
 import hashlib
 import json
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -51,7 +51,7 @@ class CacheManager:
                 return None
             
             # Update access time
-            script_data["last_accessed_at"] = datetime.utcnow().isoformat()
+            script_data["last_accessed_at"] = datetime.now(timezone.utc).isoformat()
             await self._update_script_metadata(fingerprint, script_data)
             
             self.stats["hits"] += 1
@@ -70,8 +70,8 @@ class CacheManager:
         
         try:
             # Add cache metadata
-            script_data["cached_at"] = datetime.utcnow().isoformat()
-            script_data["last_accessed_at"] = datetime.utcnow().isoformat()
+            script_data["cached_at"] = datetime.now(timezone.utc).isoformat()
+            script_data["last_accessed_at"] = datetime.now(timezone.utc).isoformat()
             script_data["access_count"] = 0
             script_data["cache_hit_count"] = 0
             
@@ -128,7 +128,7 @@ class CacheManager:
         
         if fingerprint:
             self.metadata[fingerprint]["access_count"] += 1
-            self.metadata[fingerprint]["last_accessed_at"] = datetime.utcnow().isoformat()
+            self.metadata[fingerprint]["last_accessed_at"] = datetime.now(timezone.utc).isoformat()
             self._save_metadata()
     
     async def list_scripts(
@@ -209,7 +209,7 @@ class CacheManager:
                         should_remove = True
                     elif older_than:
                         cached_at = datetime.fromisoformat(script_data.get("cached_at", ""))
-                        if datetime.utcnow() - cached_at > timedelta(seconds=older_than):
+                        if datetime.now(timezone.utc) - cached_at > timedelta(seconds=older_than):
                             should_remove = True
                     
                     if should_remove:
@@ -269,7 +269,7 @@ class CacheManager:
         cached_at = datetime.fromisoformat(script_data.get("cached_at", ""))
         ttl_seconds = script_data.get("cache_ttl", 3600)  # Default 1 hour
         
-        return datetime.utcnow() - cached_at > timedelta(seconds=ttl_seconds)
+        return datetime.now(timezone.utc) - cached_at > timedelta(seconds=ttl_seconds)
     
     def _load_metadata(self) -> Dict[str, Any]:
         """Load cache metadata from file."""

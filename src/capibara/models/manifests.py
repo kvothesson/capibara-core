@@ -1,7 +1,7 @@
 """Manifest models for configuration and policies."""
 
 from typing import Any, Dict, List, Optional, Union
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 
 class ResourceLimits(BaseModel):
@@ -26,13 +26,15 @@ class SecurityRule(BaseModel):
     action: str = Field("block", description="Action to take (block, warn, allow)")
     language: Optional[str] = Field(None, description="Specific language this applies to")
     
-    @validator('severity')
+    @field_validator('severity')
+    @classmethod
     def validate_severity(cls, v: str) -> str:
         if v not in {'error', 'warning', 'info'}:
             raise ValueError("Severity must be 'error', 'warning', or 'info'")
         return v
     
-    @validator('action')
+    @field_validator('action')
+    @classmethod
     def validate_action(cls, v: str) -> str:
         if v not in {'block', 'warn', 'allow'}:
             raise ValueError("Action must be 'block', 'warn', or 'allow'")

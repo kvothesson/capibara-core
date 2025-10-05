@@ -2,7 +2,7 @@
 
 import pytest
 from unittest.mock import Mock, AsyncMock, patch
-from datetime import datetime
+from datetime import datetime, timezone
 
 from capibara.core.engine import CapibaraEngine, SecurityError
 from capibara.models.requests import RunRequest
@@ -69,7 +69,7 @@ class TestCapibaraEngine:
             "fingerprint": "test_fingerprint",
             "security_policy": sample_request.security_policy,
             "llm_provider": "openai",
-            "created_at": datetime.utcnow(),
+            "created_at": datetime.now(timezone.utc),
             "cache_hit_count": 0,
             "metadata": {}
         }

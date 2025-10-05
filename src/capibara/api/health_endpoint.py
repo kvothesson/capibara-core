@@ -2,7 +2,7 @@
 
 import asyncio
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from typing import Any, Dict, List, Optional
 from enum import Enum
 
@@ -47,7 +47,7 @@ class HealthCheck:
                 "error": str(e)
             }
         
-        self.last_check = datetime.utcnow()
+        self.last_check = datetime.now(timezone.utc)
         self.check_duration_ms = (time.time() - start_time) * 1000
         
         return {
@@ -386,7 +386,7 @@ class HealthChecker:
         else:
             self.overall_status = HealthStatus.HEALTHY
         
-        self.last_overall_check = datetime.utcnow()
+        self.last_overall_check = datetime.now(timezone.utc)
         total_duration_ms = (time.time() - start_time) * 1000
         
         return {
@@ -434,7 +434,7 @@ class HealthChecker:
         
         return {
             "overall_status": overall_status,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "checks": results
         }
     
@@ -448,7 +448,7 @@ class HealthChecker:
             }
         
         # Check if last check is recent (within 5 minutes)
-        time_since_last = datetime.utcnow() - self.last_overall_check
+        time_since_last = datetime.now(timezone.utc) - self.last_overall_check
         if time_since_last > timedelta(minutes=5):
             return {
                 "overall_status": "unknown",

@@ -2,7 +2,7 @@
 
 import pytest
 from unittest.mock import Mock, AsyncMock, patch
-from datetime import datetime
+from datetime import datetime, timezone
 
 from capibara.sdk.client import CapibaraClient
 from capibara.models.requests import RunRequest
@@ -131,7 +131,7 @@ class TestCapibaraClient:
                 security_policy="moderate",
                 llm_provider="openai",
                 fingerprint="test_fingerprint",
-                created_at=datetime.utcnow(),
+                created_at=datetime.now(timezone.utc),
                 metadata={}
             )
             mock_engine.run_script.return_value = mock_response
@@ -172,8 +172,8 @@ class TestCapibaraClient:
                     "script_id": "script_1",
                     "prompt": "test prompt 1",
                     "language": "python",
-                    "created_at": datetime.utcnow(),
-                    "updated_at": datetime.utcnow(),
+                "created_at": datetime.now(timezone.utc),
+                "updated_at": datetime.now(timezone.utc),
                     "execution_count": 5,
                     "cache_hit_count": 10,
                     "llm_provider": "openai",
@@ -184,8 +184,8 @@ class TestCapibaraClient:
                     "script_id": "script_2", 
                     "prompt": "test prompt 2",
                     "language": "javascript",
-                    "created_at": datetime.utcnow(),
-                    "updated_at": datetime.utcnow(),
+                "created_at": datetime.now(timezone.utc),
+                "updated_at": datetime.now(timezone.utc),
                     "execution_count": 3,
                     "cache_hit_count": 7,
                     "llm_provider": "groq",
@@ -228,8 +228,8 @@ class TestCapibaraClient:
                 "prompt": "test prompt",
                 "language": "python",
                 "code": "print('Hello, World!')",
-                "created_at": datetime.utcnow(),
-                "updated_at": datetime.utcnow(),
+                "created_at": datetime.now(timezone.utc),
+                "updated_at": datetime.now(timezone.utc),
                 "execution_count": 5,
                 "cache_hit_count": 10,
                 "llm_provider": "openai",

@@ -1,7 +1,7 @@
 """Request models for Capibara Core."""
 
 from typing import Any, Dict, List, Optional, Union
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 
 class RunRequest(BaseModel):
@@ -16,13 +16,15 @@ class RunRequest(BaseModel):
     resource_limits: Optional[Dict[str, Any]] = Field(None, description="Custom resource limits")
     execute: bool = Field(False, description="Whether to execute the generated script")
     
-    @validator('prompt')
+    @field_validator('prompt')
+    @classmethod
     def prompt_not_empty(cls, v: str) -> str:
         if not v.strip():
             raise ValueError("Prompt cannot be empty")
         return v.strip()
     
-    @validator('language')
+    @field_validator('language')
+    @classmethod
     def validate_language(cls, v: str) -> str:
         supported_languages = {'python', 'javascript', 'bash', 'powershell'}
         if v.lower() not in supported_languages:
@@ -40,14 +42,16 @@ class ListRequest(BaseModel):
     sort_by: str = Field("created_at", description="Sort field")
     sort_order: str = Field("desc", description="Sort order (asc/desc)")
     
-    @validator('sort_by')
+    @field_validator('sort_by')
+    @classmethod
     def validate_sort_by(cls, v: str) -> str:
         valid_fields = {'created_at', 'updated_at', 'execution_count', 'prompt_length'}
         if v not in valid_fields:
             raise ValueError(f"Invalid sort field: {v}. Valid: {valid_fields}")
         return v
     
-    @validator('sort_order')
+    @field_validator('sort_order')
+    @classmethod
     def validate_sort_order(cls, v: str) -> str:
         if v.lower() not in {'asc', 'desc'}:
             raise ValueError("Sort order must be 'asc' or 'desc'")
@@ -70,7 +74,8 @@ class ClearRequest(BaseModel):
     older_than: Optional[int] = Field(None, description="Clear scripts older than N seconds")
     all: bool = Field(False, description="Clear all cached scripts")
     
-    @validator('script_ids')
+    @field_validator('script_ids')
+    @classmethod
     def validate_script_ids(cls, v: Optional[List[str]]) -> Optional[List[str]]:
         if v is not None and len(v) == 0:
             raise ValueError("script_ids cannot be empty list")

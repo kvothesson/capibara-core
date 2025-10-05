@@ -3,7 +3,7 @@
 import asyncio
 import json
 from typing import Any, Dict, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 
 from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -41,7 +41,7 @@ def create_app() -> FastAPI:
     # Add request logging middleware
     @app.middleware("http")
     async def log_requests(request: Request, call_next):
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
         
         # Log request
         logger.info(
@@ -55,7 +55,7 @@ def create_app() -> FastAPI:
         response = await call_next(request)
         
         # Log response
-        duration_ms = (datetime.utcnow() - start_time).total_seconds() * 1000
+        duration_ms = (datetime.now(timezone.utc) - start_time).total_seconds() * 1000
         logger.info(
             "HTTP response",
             method=request.method,
@@ -79,7 +79,7 @@ def create_app() -> FastAPI:
             return JSONResponse(
                 content={
                     "overall_status": "unhealthy",
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
                     "error": str(e)
                 },
                 status_code=503
@@ -97,7 +97,7 @@ def create_app() -> FastAPI:
             return JSONResponse(
                 content={
                     "overall_status": "unhealthy",
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
                     "error": str(e)
                 },
                 status_code=503
@@ -115,7 +115,7 @@ def create_app() -> FastAPI:
             return JSONResponse(
                 content={
                     "overall_status": "unknown",
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
                     "error": str(e)
                 },
                 status_code=503
@@ -149,7 +149,7 @@ def create_app() -> FastAPI:
                 "metrics": "/metrics",
                 "docs": "/docs" if config.debug else "disabled",
             },
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
     
     # Error handlers
@@ -159,7 +159,7 @@ def create_app() -> FastAPI:
             content={
                 "error": "Not Found",
                 "message": f"The requested endpoint {request.url.path} was not found",
-                "timestamp": datetime.utcnow().isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat()
             },
             status_code=404
         )
@@ -171,7 +171,7 @@ def create_app() -> FastAPI:
             content={
                 "error": "Internal Server Error",
                 "message": "An internal error occurred",
-                "timestamp": datetime.utcnow().isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat()
             },
             status_code=500
         )

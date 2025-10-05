@@ -2,7 +2,7 @@
 
 import asyncio
 import hashlib
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 from capibara.models.requests import RunRequest
@@ -93,11 +93,11 @@ class CapibaraEngine:
             "fingerprint": fingerprint,
             "security_policy": request.security_policy,
             "llm_provider": self.script_generator.last_provider_used,
-            "created_at": datetime.utcnow(),
+            "created_at": datetime.now(timezone.utc),
             "metadata": {
                 "context": request.context,
                 "processed_prompt": processed_prompt,
-                "scan_result": scan_result.dict(),
+                "scan_result": scan_result.model_dump(),
             }
         }
         
@@ -120,7 +120,7 @@ class CapibaraEngine:
             security_policy=request.security_policy,
             llm_provider=self.script_generator.last_provider_used,
             fingerprint=fingerprint,
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
             metadata=script_info["metadata"],
         )
         
@@ -204,15 +204,15 @@ class CapibaraEngine:
             details=kwargs,
         )
         # This would be sent to audit logging system
-        logger.info("Audit event", **event.dict())
+        logger.info("Audit event", **event.model_dump())
     
     def _generate_script_id(self) -> str:
         """Generate unique script ID."""
-        return f"script_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}_{hashlib.md5().hexdigest()[:8]}"
+        return f"script_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}_{hashlib.md5().hexdigest()[:8]}"
     
     def _generate_event_id(self) -> str:
         """Generate unique event ID."""
-        return f"event_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}_{hashlib.md5().hexdigest()[:8]}"
+        return f"event_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}_{hashlib.md5().hexdigest()[:8]}"
     
     def _modify_code_for_execution(self, code: str, request: RunRequest) -> str:
         """Modify generated code to use actual inputs instead of hardcoded values."""

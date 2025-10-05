@@ -3,7 +3,7 @@
 import pytest
 import asyncio
 from unittest.mock import Mock
-from datetime import datetime
+from datetime import datetime, timezone
 
 from capibara.models.requests import RunRequest
 from capibara.models.responses import RunResponse
@@ -45,7 +45,7 @@ def sample_run_response():
         security_policy="moderate",
         llm_provider="openai",
         fingerprint="test_fingerprint_123",
-        created_at=datetime.utcnow(),
+        created_at=datetime.now(timezone.utc),
         metadata={"test": "metadata"}
     )
 

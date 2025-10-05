@@ -1,7 +1,7 @@
 """Audit logging for security and compliance."""
 
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -38,7 +38,7 @@ class AuditLogger:
         try:
             # Add timestamp if not present
             if not event.timestamp:
-                event.timestamp = datetime.utcnow()
+                event.timestamp = datetime.now(timezone.utc)
             
             # Write to audit log
             await self._write_audit_event(event)
@@ -228,7 +228,7 @@ class AuditLogger:
     def _generate_event_id(self) -> str:
         """Generate unique event ID."""
         import uuid
-        return f"event_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}_{str(uuid.uuid4())[:8]}"
+        return f"event_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}_{str(uuid.uuid4())[:8]}"
     
     def get_audit_stats(self) -> Dict[str, Any]:
         """Get audit logging statistics."""

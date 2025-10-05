@@ -225,8 +225,8 @@ class TestCapibaraClientIntegration:
         
         # Assert
         assert len(response.scripts) == 2
-        assert response.scripts[0]["script_id"] == "script_1"
-        assert response.scripts[1]["script_id"] == "script_2"
+        assert response.scripts[0].script_id == "script_1"
+        assert response.scripts[1].script_id == "script_2"
         assert response.total_count == 2
         assert response.limit == 10
         assert response.offset == 0
@@ -268,7 +268,7 @@ class TestCapibaraClientIntegration:
         )
         
         # Assert
-        assert response.script == mock_script
+        assert response.script.script_id == "script_123"
         assert response.code == "print('Hello, World!')"
         assert response.execution_logs is None
         

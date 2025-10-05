@@ -2,7 +2,7 @@
 
 import pytest
 import asyncio
-from unittest.mock import patch, Mock
+from unittest.mock import patch, Mock, AsyncMock
 from click.testing import CliRunner
 
 from capibara.cli.main import cli
@@ -20,11 +20,11 @@ class TestCLIIntegration:
     def mock_client(self):
         """Create mock client for testing."""
         client = Mock()
-        client.run = Mock()
-        client.list_scripts = Mock()
-        client.show_script = Mock()
-        client.clear_cache = Mock()
-        client.health_check = Mock()
+        client.run = AsyncMock()
+        client.list_scripts = AsyncMock()
+        client.show_script = AsyncMock()
+        client.clear_cache = AsyncMock()
+        client.health_check = AsyncMock()
         client.get_stats = Mock()
         return client
     
@@ -42,7 +42,7 @@ class TestCLIIntegration:
     
     def test_cli_list_help(self, cli_runner):
         """Test CLI list command help."""
-        result = cli_runner.invoke(cli, ['list', '--help'])
+        result = cli_runner.invoke(cli, ['list-scripts', '--help'])
         assert result.exit_code == 0
         assert "List cached scripts" in result.output
     
@@ -133,33 +133,48 @@ class TestCLIIntegration:
     @patch('capibara.cli.main._get_client')
     def test_cli_list_scripts(self, mock_get_client, cli_runner, mock_client):
         """Test CLI list scripts command."""
+        from capibara.models.responses import ListResponse, ScriptInfo
+        from datetime import datetime, timezone
+        
         # Arrange
         mock_get_client.return_value = mock_client
         mock_scripts = [
-            {
-                "script_id": "script_1",
-                "prompt": "test prompt 1",
-                "language": "python",
-                "created_at": "2024-01-01 12:00:00",
-                "execution_count": 5,
-                "cache_hit_count": 10
-            },
-            {
-                "script_id": "script_2",
-                "prompt": "test prompt 2", 
-                "language": "javascript",
-                "created_at": "2024-01-01 13:00:00",
-                "execution_count": 3,
-                "cache_hit_count": 7
-            }
+            ScriptInfo(
+                script_id="script_1",
+                prompt="test prompt 1",
+                language="python",
+                created_at=datetime.now(timezone.utc),
+                updated_at=datetime.now(timezone.utc),
+                execution_count=5,
+                cache_hit_count=10,
+                llm_provider="openai",
+                fingerprint="fp1",
+                size_bytes=100
+            ),
+            ScriptInfo(
+                script_id="script_2",
+                prompt="test prompt 2", 
+                language="javascript",
+                created_at=datetime.now(timezone.utc),
+                updated_at=datetime.now(timezone.utc),
+                execution_count=3,
+                cache_hit_count=7,
+                llm_provider="groq",
+                fingerprint="fp2",
+                size_bytes=150
+            )
         ]
-        mock_response = Mock()
-        mock_response.scripts = mock_scripts
-        mock_response.total_count = 2
+        mock_response = ListResponse(
+            scripts=mock_scripts,
+            total_count=2,
+            limit=50,
+            offset=0,
+            has_more=False
+        )
         mock_client.list_scripts.return_value = mock_response
         
         # Act
-        result = cli_runner.invoke(cli, ['list'])
+        result = cli_runner.invoke(cli, ['list-scripts'])
         
         # Assert
         assert result.exit_code == 0
@@ -171,24 +186,30 @@ class TestCLIIntegration:
     @patch('capibara.cli.main._get_client')
     def test_cli_show_script(self, mock_get_client, cli_runner, mock_client):
         """Test CLI show script command."""
+        from capibara.models.responses import ShowResponse, ScriptInfo
+        from datetime import datetime, timezone
+        
         # Arrange
         mock_get_client.return_value = mock_client
-        mock_script = {
-            "script_id": "test_script_123",
-            "prompt": "test prompt",
-            "language": "python",
-            "llm_provider": "openai",
-            "created_at": "2024-01-01 12:00:00",
-            "updated_at": "2024-01-01 12:00:00",
-            "execution_count": 5,
-            "cache_hit_count": 10,
-            "size_bytes": 1000,
-            "security_policy": "moderate"
-        }
-        mock_response = Mock()
-        mock_response.script = mock_script
-        mock_response.code = "print('Hello, World!')"
-        mock_response.execution_logs = None
+        mock_script = ScriptInfo(
+            script_id="test_script_123",
+            prompt="test prompt",
+            language="python",
+            llm_provider="openai",
+            created_at=datetime.now(timezone.utc),
+            updated_at=datetime.now(timezone.utc),
+            execution_count=5,
+            cache_hit_count=10,
+            size_bytes=1000,
+            security_policy="moderate",
+            fingerprint="test_fp",
+            metadata={}
+        )
+        mock_response = ShowResponse(
+            script=mock_script,
+            code="print('Hello, World!')",
+            execution_logs=None
+        )
         mock_client.show_script.return_value = mock_response
         
         # Act
