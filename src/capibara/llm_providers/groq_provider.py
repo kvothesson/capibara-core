@@ -143,4 +143,8 @@ class GroqProvider(LLMProvider):
 
 class LLMProviderError(Exception):
     """Raised when LLM provider operations fail."""
-    pass
+    
+    def __init__(self, message: str, details: Optional[Dict[str, Any]] = None):
+        super().__init__(message)
+        self.message = message
+        self.details = details or {}

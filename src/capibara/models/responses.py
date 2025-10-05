@@ -1,6 +1,6 @@
 """Response models for Capibara Core."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field
 
@@ -86,4 +86,4 @@ class ErrorResponse(BaseModel):
     error: str = Field(..., description="Error message")
     error_code: str = Field(..., description="Error code")
     details: Optional[Dict[str, Any]] = Field(None, description="Additional error details")
-    timestamp: datetime = Field(default_factory=datetime.utcnow, description="Error timestamp")
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), description="Error timestamp")

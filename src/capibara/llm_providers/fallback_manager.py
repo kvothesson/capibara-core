@@ -141,4 +141,8 @@ class FallbackManager:
 
 class NoAvailableProvidersError(Exception):
     """Raised when no providers are available."""
-    pass
+    
+    def __init__(self, message: str, details: Optional[Dict[str, Any]] = None):
+        super().__init__(message)
+        self.message = message
+        self.details = details or {}

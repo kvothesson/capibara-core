@@ -1,0 +1,65 @@
+# Capibara Core Configuration
+# This file contains default configuration values
+# Environment variables will override these settings
+
+# Core settings
+debug: false
+environment: development
+
+# Database configuration
+database:
+  url: "sqlite:///capibara.db"
+  pool_size: 10
+  max_overflow: 20
+  echo: false
+
+# Cache configuration
+cache:
+  dir: "~/.capibara/cache"
+  ttl: 3600  # seconds
+  max_size_mb: 1024
+  cleanup_interval: 300  # seconds
+
+# Security configuration
+security:
+  default_policy: "moderate"
+  policies_dir: "config/security-policies"
+  audit_log_dir: "~/.capibara/logs/audit"
+  enable_audit_logging: true
+
+# Container execution configuration
+container:
+  image: "python:3.11-slim"
+  memory_limit_mb: 512
+  cpu_limit: 1.0
+  execution_timeout: 60  # seconds
+  network_access: false
+  allow_subprocess: false
+
+# Logging configuration
+logging:
+  level: "INFO"
+  format: "json"
+  file: null  # Set to a path to enable file logging
+  max_size_mb: 100
+  backup_count: 5
+
+# LLM provider configuration
+llm:
+  default_provider: "openai"
+  max_tokens: 1000
+  temperature: 0.7
+  timeout: 30  # seconds
+  retry_attempts: 3
+
+# Metrics configuration
+metrics:
+  enabled: true
+  port: 8080
+  path: "/metrics"
+  prometheus_endpoint: "http://localhost:9090"
+
+# Custom settings (can be used for extensions)
+custom:
+  # Add any custom configuration here
+  example_setting: "example_value"

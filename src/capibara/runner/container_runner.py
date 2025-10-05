@@ -327,3 +327,39 @@ class ContainerRunner:
         except Exception as e:
             logger.warning("Container runtime health check failed", error=str(e))
             return False
+    
+    def _parse_memory_usage(self, stats: Dict[str, Any]) -> float:
+        """Parse memory usage from container stats."""
+        try:
+            # Docker stats format
+            if "memory_stats" in stats:
+                memory_stats = stats["memory_stats"]
+                if "usage" in memory_stats:
+                    return memory_stats["usage"] / (1024 * 1024)  # Convert bytes to MB
+            
+            # Alternative format
+            if "memory" in stats:
+                return stats["memory"] / (1024 * 1024)
+            
+            return 0.0
+        except (KeyError, TypeError, ZeroDivisionError):
+            return 0.0
+    
+    def _parse_cpu_usage(self, stats: Dict[str, Any]) -> int:
+        """Parse CPU usage from container stats."""
+        try:
+            # Docker stats format
+            if "cpu_stats" in stats:
+                cpu_stats = stats["cpu_stats"]
+                if "cpu_usage" in cpu_stats:
+                    cpu_usage = cpu_stats["cpu_usage"]
+                    if "total_usage" in cpu_usage:
+                        return int(cpu_usage["total_usage"] / 1_000_000)  # Convert nanoseconds to milliseconds
+            
+            # Alternative format
+            if "cpu" in stats:
+                return int(stats["cpu"])
+            
+            return 0
+        except (KeyError, TypeError, ValueError):
+            return 0

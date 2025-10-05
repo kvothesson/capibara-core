@@ -3,47 +3,65 @@
 
 class CapibaraError(Exception):
     """Base exception for Capibara SDK."""
-    pass
+    
+    def __init__(self, message: str, details: dict = None):
+        super().__init__(message)
+        self.message = message
+        self.details = details or {}
 
 
 class ScriptGenerationError(CapibaraError):
     """Raised when script generation fails."""
-    pass
+    
+    def __init__(self, message: str, details: dict = None):
+        super().__init__(message, details)
 
 
 class ExecutionError(CapibaraError):
     """Raised when script execution fails."""
-    pass
+    
+    def __init__(self, message: str, details: dict = None):
+        super().__init__(message, details)
 
 
 class SecurityError(CapibaraError):
     """Raised when security checks fail."""
     
-    def __init__(self, message: str, violations: list = None):
-        super().__init__(message)
+    def __init__(self, message: str, violations: list = None, details: dict = None):
+        super().__init__(message, details)
         self.violations = violations or []
 
 
 class CacheError(CapibaraError):
     """Raised when cache operations fail."""
-    pass
+    
+    def __init__(self, message: str, details: dict = None):
+        super().__init__(message, details)
 
 
 class LLMProviderError(CapibaraError):
     """Raised when LLM provider operations fail."""
-    pass
+    
+    def __init__(self, message: str, details: dict = None):
+        super().__init__(message, details)
 
 
 class ContainerError(CapibaraError):
     """Raised when container operations fail."""
-    pass
+    
+    def __init__(self, message: str, details: dict = None):
+        super().__init__(message, details)
 
 
 class PolicyError(CapibaraError):
     """Raised when security policy operations fail."""
-    pass
+    
+    def __init__(self, message: str, details: dict = None):
+        super().__init__(message, details)
 
 
 class ValidationError(CapibaraError):
     """Raised when input validation fails."""
-    pass
+    
+    def __init__(self, message: str, details: dict = None):
+        super().__init__(message, details)

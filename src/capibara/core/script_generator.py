@@ -203,4 +203,8 @@ PowerShell-specific requirements:
 
 class ScriptGenerationError(Exception):
     """Raised when script generation fails."""
-    pass
+    
+    def __init__(self, message: str, details: Optional[Dict[str, Any]] = None):
+        super().__init__(message)
+        self.message = message
+        self.details = details or {}

@@ -81,10 +81,12 @@ def clear(ctx, script_ids: Optional[str], language: Optional[str],
 
 
 @cli.command()
+@click.option('--quick', '-q', is_flag=True, help='Run quick health check (critical components only)')
+@click.option('--json', is_flag=True, help='Output results in JSON format')
 @click.pass_context
-def health(ctx):
+def health(ctx, quick: bool, json: bool):
     """Check health of all components."""
-    asyncio.run(_health_check(ctx))
+    asyncio.run(_health_check(ctx, quick, json))
 
 
 @cli.command()
@@ -296,23 +298,42 @@ async def _clear_cache(ctx, script_ids: Optional[str], language: Optional[str],
             console.print_exception()
 
 
-async def _health_check(ctx):
+async def _health_check(ctx, quick: bool = False, json_output: bool = False):
     """Check health of all components."""
     try:
         client = _get_client(ctx)
         
         health = await client.health_check()
         
+        if json_output:
+            import json
+            console.print(json.dumps(health, indent=2, default=str))
+            return
+        
         console.print(f"[bold]Health Check[/bold]")
         console.print(f"Overall: {'[green]Healthy[/green]' if health['overall'] else '[red]Unhealthy[/red]'}")
         
-        for component, status in health['components'].items():
-            if status['healthy']:
-                console.print(f"{component}: [green]Healthy[/green]")
-            else:
-                console.print(f"{component}: [red]Unhealthy[/red]")
-                if 'error' in status:
-                    console.print(f"  Error: {status['error']}")
+        if quick:
+            # Show only critical components
+            critical_components = ['cache', 'llm_providers', 'container_runner']
+            for component in critical_components:
+                if component in health['components']:
+                    status = health['components'][component]
+                    if status['healthy']:
+                        console.print(f"{component}: [green]Healthy[/green]")
+                    else:
+                        console.print(f"{component}: [red]Unhealthy[/red]")
+                        if 'error' in status:
+                            console.print(f"  Error: {status['error']}")
+        else:
+            # Show all components
+            for component, status in health['components'].items():
+                if status['healthy']:
+                    console.print(f"{component}: [green]Healthy[/green]")
+                else:
+                    console.print(f"{component}: [red]Unhealthy[/red]")
+                    if 'error' in status:
+                        console.print(f"  Error: {status['error']}")
         
     except Exception as e:
         console.print(f"[bold red]Error:[/bold red] {str(e)}")
