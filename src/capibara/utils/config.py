@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-from dotenv import load_dotenv
+from dotenv import load_dotenv  # type: ignore[import-not-found]
 
 from capibara.utils.logging import get_logger
 

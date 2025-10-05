@@ -37,14 +37,14 @@ def cli(ctx: click.Context, verbose: bool, config: str | None) -> None:
 @click.option("--context", help="Additional context as JSON")
 @click.pass_context
 def run(
-    ctx,
+    ctx: click.Context,
     prompt: str,
     language: str,
     execute: bool,
     security_policy: str | None,
     provider: str | None,
     context: str | None,
-):
+) -> None:
     """Generate and optionally execute a script from a natural language prompt."""
     asyncio.run(
         _run_script(ctx, prompt, language, execute, security_policy, provider, context)
@@ -60,14 +60,14 @@ def run(
 @click.option("--sort-order", default="desc", help="Sort order (asc/desc)")
 @click.pass_context
 def list_scripts(
-    ctx,
+    ctx: click.Context,
     limit: int,
     offset: int,
     language: str | None,
     search: str | None,
     sort_by: str,
     sort_order: str,
-):
+) -> None:
     """List cached scripts."""
     asyncio.run(
         _list_scripts(ctx, limit, offset, language, search, sort_by, sort_order)
@@ -92,13 +92,13 @@ def show(ctx: click.Context, script_id: str, code: bool, logs: bool) -> None:
 @click.option("--confirm", is_flag=True, help="Skip confirmation prompt")
 @click.pass_context
 def clear(
-    ctx,
+    ctx: click.Context,
     script_ids: str | None,
     language: str | None,
     older_than: int | None,
     all: bool,
     confirm: bool,
-):
+) -> None:
     """Clear cache or specific scripts."""
     asyncio.run(_clear_cache(ctx, script_ids, language, older_than, all, confirm))
 
@@ -132,14 +132,14 @@ def doctor(ctx: click.Context) -> None:
 
 
 async def _run_script(
-    ctx,
+    ctx: click.Context,
     prompt: str,
     language: str,
     execute: bool,
     security_policy: str | None,
     provider: str | None,
     context: str | None,
-):
+) -> None:
     """Run script generation."""
     try:
         # Parse context if provided
@@ -202,14 +202,14 @@ async def _run_script(
 
 
 async def _list_scripts(
-    ctx,
+    ctx: click.Context,
     limit: int,
     offset: int,
     language: str | None,
     search: str | None,
     sort_by: str,
     sort_order: str,
-):
+) -> None:
     """List cached scripts."""
     try:
         client = _get_client(ctx)
@@ -309,13 +309,13 @@ async def _show_script(
 
 
 async def _clear_cache(
-    ctx,
+    ctx: click.Context,
     script_ids: str | None,
     language: str | None,
     older_than: int | None,
     all: bool,
     confirm: bool,
-):
+) -> None:
     """Clear cache."""
     try:
         client = _get_client(ctx)
@@ -330,9 +330,7 @@ async def _clear_cache(
             if all:
                 confirm_text = "Are you sure you want to clear ALL cached scripts?"
             else:
-                confirm_text = (
-                    f"Are you sure you want to clear {len(script_id_list)} scripts?"
-                )
+                confirm_text = f"Are you sure you want to clear {len(script_id_list) if script_id_list else 0} scripts?"
 
             if not click.confirm(confirm_text):
                 console.print("Operation cancelled")
@@ -538,7 +536,7 @@ async def _doctor_check(ctx: click.Context) -> None:
         console.print("• Or run: [cyan]./scripts/install-docker.sh[/cyan]")
 
 
-def _get_client(ctx) -> CapibaraClient:
+def _get_client(ctx: click.Context) -> CapibaraClient:
     """Get or create Capibara client."""
     if "client" not in ctx.obj:
         # Get API keys from environment
@@ -556,7 +554,7 @@ def _get_client(ctx) -> CapibaraClient:
             groq_api_key=groq_key,
         )
 
-    return ctx.obj["client"]
+    return ctx.obj["client"]  # type: ignore[no-any-return]
 
 
 if __name__ == "__main__":

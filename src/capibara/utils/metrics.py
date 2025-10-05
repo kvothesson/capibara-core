@@ -319,7 +319,8 @@ class MetricsCollector:
 
     def get_metrics(self) -> str:
         """Get metrics in Prometheus format."""
-        return generate_latest(self.registry).decode("utf-8")
+        metrics_bytes: bytes = generate_latest(self.registry)
+        return metrics_bytes.decode("utf-8")
 
     def get_metrics_dict(self) -> dict[str, Any]:
         """Get metrics as a dictionary for debugging."""

@@ -17,3 +17,9 @@ jsonschema>=4.0.0
 # Utilities
 python-dotenv>=1.0.0
 pathlib2>=2.3.0
+PyYAML>=6.0.0
+
+# Type stubs
+types-PyYAML>=6.0.0
+types-psutil>=7.0.0
+types-docker>=7.0.0
