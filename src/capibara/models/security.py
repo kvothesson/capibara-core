@@ -15,13 +15,13 @@ class SecurityViolation(BaseModel):
     message: str = Field(..., description="Human-readable violation message")
     pattern_matched: str = Field(..., description="Pattern that was matched")
     line_number: int | None = Field(
-        None, description="Line number where violation occurred"
+        default=None, description="Line number where violation occurred"
     )
     column_number: int | None = Field(
-        None, description="Column number where violation occurred"
+        default=None, description="Column number where violation occurred"
     )
     code_snippet: str | None = Field(
-        None, description="Code snippet containing the violation"
+        default=None, description="Code snippet containing the violation"
     )
     context: dict[str, Any] = Field(
         default_factory=dict, description="Additional context"
@@ -45,13 +45,13 @@ class AuditEvent(BaseModel):
     timestamp: datetime = Field(
         default_factory=datetime.utcnow, description="Event timestamp"
     )
-    severity: str = Field("info", description="Event severity")
+    severity: str = Field(default="info", description="Event severity")
     message: str = Field(..., description="Event message")
     details: dict[str, Any] = Field(default_factory=dict, description="Event details")
-    ip_address: str | None = Field(None, description="Source IP address")
-    user_agent: str | None = Field(None, description="User agent string")
+    ip_address: str | None = Field(default=None, description="Source IP address")
+    user_agent: str | None = Field(default=None, description="User agent string")
     resource_usage: dict[str, Any] | None = Field(
-        None, description="Resource usage information"
+        default=None, description="Resource usage information"
     )
     security_violations: list[SecurityViolation] = Field(
         default_factory=list, description="Associated security violations"

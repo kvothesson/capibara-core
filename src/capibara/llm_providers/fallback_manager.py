@@ -77,13 +77,13 @@ class FallbackManager:
     def get_provider_stats(self) -> dict[str, Any]:
         """Get statistics for all providers."""
         total_requests = sum(
-            stats["requests"] for stats in self.provider_stats.values()
+            stats["requests"] or 0 for stats in self.provider_stats.values()
         )
         total_successes = sum(
-            stats["successes"] for stats in self.provider_stats.values()
+            stats["successes"] or 0 for stats in self.provider_stats.values()
         )
         total_failures = sum(
-            stats["failures"] for stats in self.provider_stats.values()
+            stats["failures"] or 0 for stats in self.provider_stats.values()
         )
 
         return {
@@ -97,8 +97,8 @@ class FallbackManager:
                 name: {
                     **stats,
                     "success_rate": (
-                        (stats["successes"] / stats["requests"] * 100)
-                        if stats["requests"] > 0
+                        ((stats["successes"] or 0) / (stats["requests"] or 1) * 100)
+                        if (stats["requests"] or 0) > 0
                         else 0
                     ),
                 }
@@ -109,11 +109,17 @@ class FallbackManager:
     def record_request(self, provider_name: str, success: bool) -> None:
         """Record a request result for a provider."""
         if provider_name in self.provider_stats:
-            self.provider_stats[provider_name]["requests"] += 1
+            self.provider_stats[provider_name]["requests"] = (
+                self.provider_stats[provider_name]["requests"] or 0
+            ) + 1
             if success:
-                self.provider_stats[provider_name]["successes"] += 1
+                self.provider_stats[provider_name]["successes"] = (
+                    self.provider_stats[provider_name]["successes"] or 0
+                ) + 1
             else:
-                self.provider_stats[provider_name]["failures"] += 1
+                self.provider_stats[provider_name]["failures"] = (
+                    self.provider_stats[provider_name]["failures"] or 0
+                ) + 1
 
     def get_available_providers(self) -> list[str]:
         """Get list of available provider names."""

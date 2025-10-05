@@ -48,7 +48,7 @@ class SandboxConfig(BaseModel):
 
     # Resource limits
     resource_limits: ResourceLimits = Field(
-        default_factory=ResourceLimits, description="Resource limits"
+        default_factory=lambda: ResourceLimits(), description="Resource limits"
     )
 
     # Additional configuration

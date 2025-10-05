@@ -354,17 +354,23 @@ class HealthChecker:
         for i, result in enumerate(check_results):
             if isinstance(result, Exception):
                 check = self.checks[i]
-                result = {
+                result_dict = {
                     "name": check.name,
                     "status": "unhealthy",
                     "critical": check.critical,
                     "error": str(result),
                 }
-
-            results.append(result)
-
-            if result.get("status") == "unhealthy" and result.get("critical"):
-                critical_failures += 1
+                results.append(result_dict)
+                if result_dict.get("status") == "unhealthy" and result_dict.get(
+                    "critical"
+                ):
+                    critical_failures += 1
+            else:
+                # result is already a dict
+                assert isinstance(result, dict)
+                results.append(result)
+                if result.get("status") == "unhealthy" and result.get("critical"):
+                    critical_failures += 1
 
         # Determine overall status
         if critical_failures > 0:
@@ -408,17 +414,21 @@ class HealthChecker:
         for i, result in enumerate(check_results):
             if isinstance(result, Exception):
                 check = critical_checks[i]
-                result = {
+                result_dict = {
                     "name": check.name,
                     "status": "unhealthy",
                     "error": str(result),
                 }
+                results.append(result_dict)
                 any_failures = True
-
-            results.append(result)
-
-            if result.get("status") != "healthy":
-                any_failures = True
+                if result_dict.get("status") != "healthy":
+                    any_failures = True
+            else:
+                # result is already a dict
+                assert isinstance(result, dict)
+                results.append(result)
+                if result.get("status") != "healthy":
+                    any_failures = True
 
         overall_status = "healthy" if not any_failures else "unhealthy"
 

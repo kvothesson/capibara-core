@@ -398,8 +398,10 @@ class ConfigManager:
             )
             self.config.logging.level = "INFO"
 
-    def _get_env(self, key: str, default: str = "") -> str:
+    def _get_env(self, key: str, default: str | None = "") -> str:
         """Get environment variable as string."""
+        if default is None:
+            default = ""
         return os.getenv(key, default)
 
     def _get_int_env(self, key: str, default: int) -> int:

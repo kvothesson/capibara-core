@@ -169,7 +169,7 @@ class ContainerRunner:
             "Container created and started", container_id=container.id, image=image
         )
 
-        return container.id
+        return str(container.id)
 
     async def _execute_in_container(
         self,
@@ -357,11 +357,13 @@ class ContainerRunner:
             if "memory_stats" in stats:
                 memory_stats = stats["memory_stats"]
                 if "usage" in memory_stats:
-                    return memory_stats["usage"] / (1024 * 1024)  # Convert bytes to MB
+                    return float(memory_stats["usage"]) / (
+                        1024 * 1024
+                    )  # Convert bytes to MB
 
             # Alternative format
             if "memory" in stats:
-                return stats["memory"] / (1024 * 1024)
+                return float(stats["memory"]) / (1024 * 1024)
 
             return 0.0
         except (KeyError, TypeError, ZeroDivisionError):

@@ -10,15 +10,15 @@ class LLMProviderConfig(BaseModel):
     """Configuration for an LLM provider."""
 
     name: str = Field(..., description="Provider name")
-    api_key: str | None = Field(None, description="API key")
-    base_url: str | None = Field(None, description="Base URL")
+    api_key: str | None = Field(default=None, description="API key")
+    base_url: str | None = Field(default=None, description="Base URL")
     model: str = Field(..., description="Model name")
-    max_tokens: int = Field(4000, description="Maximum tokens")
-    temperature: float = Field(0.7, description="Temperature")
-    timeout_seconds: int = Field(30, description="Timeout in seconds")
-    retry_attempts: int = Field(3, description="Retry attempts")
-    priority: int = Field(1, description="Priority (lower = higher)")
-    enabled: bool = Field(True, description="Whether enabled")
+    max_tokens: int = Field(default=4000, description="Maximum tokens")
+    temperature: float = Field(default=0.7, description="Temperature")
+    timeout_seconds: int = Field(default=30, description="Timeout in seconds")
+    retry_attempts: int = Field(default=3, description="Retry attempts")
+    priority: int = Field(default=1, description="Priority (lower = higher)")
+    enabled: bool = Field(default=True, description="Whether enabled")
     metadata: dict[str, Any] = Field(
         default_factory=dict, description="Additional config"
     )

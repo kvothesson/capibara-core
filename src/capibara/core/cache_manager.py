@@ -78,7 +78,7 @@ class CacheManager:
             # Convert all datetime objects to ISO format strings
             def convert_datetime(obj: Any) -> str:
                 if hasattr(obj, "isoformat"):
-                    return obj.isoformat()
+                    return str(obj.isoformat())
                 return str(obj)
 
             # Recursively convert datetime objects

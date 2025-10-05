@@ -80,7 +80,7 @@ class MetricsHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(b"Not Found")
 
-    def log_message(self, format, *args):
+    def log_message(self, format: str, *args: Any) -> None:
         """Override to use our logger instead of default logging."""
         logger.debug("HTTP request", message=format % args)
 
@@ -137,7 +137,8 @@ class MetricsServer:
         """Run the HTTP server."""
         try:
             logger.info("Starting metrics HTTP server", host=self.host, port=self.port)
-            self.server.serve_forever()
+            if self.server is not None:
+                self.server.serve_forever()
         except Exception as e:
             logger.error("Error running metrics server", error=str(e))
         finally:

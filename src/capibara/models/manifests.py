@@ -9,21 +9,28 @@ class ResourceLimits(BaseModel):
     """Resource limits for script execution."""
 
     cpu_time_seconds: int = Field(
-        30, ge=1, le=300, description="Maximum CPU time in seconds"
+        default=30, ge=1, le=300, description="Maximum CPU time in seconds"
     )
-    memory_mb: int = Field(512, ge=64, le=2048, description="Maximum memory in MB")
+    memory_mb: int = Field(
+        default=512, ge=64, le=2048, description="Maximum memory in MB"
+    )
     execution_time_seconds: int = Field(
-        60, ge=1, le=600, description="Maximum wall clock time in seconds"
+        default=60, ge=1, le=600, description="Maximum wall clock time in seconds"
     )
     max_file_size_mb: int = Field(
-        10, ge=1, le=100, description="Maximum file size for I/O operations"
+        default=10, ge=1, le=100, description="Maximum file size for I/O operations"
     )
     max_files: int = Field(
-        100, ge=1, le=1000, description="Maximum number of files that can be created"
+        default=100,
+        ge=1,
+        le=1000,
+        description="Maximum number of files that can be created",
     )
-    network_access: bool = Field(False, description="Whether network access is allowed")
+    network_access: bool = Field(
+        default=False, description="Whether network access is allowed"
+    )
     allow_subprocess: bool = Field(
-        False, description="Whether subprocess execution is allowed"
+        default=False, description="Whether subprocess execution is allowed"
     )
 
 
@@ -33,9 +40,15 @@ class SecurityRule(BaseModel):
     name: str = Field(..., description="Rule name")
     description: str = Field(..., description="Rule description")
     pattern: str = Field(..., description="Regex pattern to match")
-    severity: str = Field("error", description="Severity level (error, warning, info)")
-    action: str = Field("block", description="Action to take (block, warn, allow)")
-    language: str | None = Field(None, description="Specific language this applies to")
+    severity: str = Field(
+        default="error", description="Severity level (error, warning, info)"
+    )
+    action: str = Field(
+        default="block", description="Action to take (block, warn, allow)"
+    )
+    language: str | None = Field(
+        default=None, description="Specific language this applies to"
+    )
 
     @field_validator("severity")
     @classmethod
@@ -57,10 +70,10 @@ class SecurityPolicy(BaseModel):
 
     name: str = Field(..., description="Policy name")
     description: str = Field(..., description="Policy description")
-    version: str = Field("1.0", description="Policy version")
+    version: str = Field(default="1.0", description="Policy version")
     rules: list[SecurityRule] = Field(..., description="Security rules")
     resource_limits: ResourceLimits = Field(
-        default_factory=ResourceLimits, description="Resource limits"
+        default_factory=lambda: ResourceLimits(), description="Resource limits"
     )
     allowed_imports: list[str] = Field(
         default_factory=list, description="Allowed import patterns"
@@ -84,21 +97,28 @@ class LLMProviderConfig(BaseModel):
 
     name: str = Field(..., description="Provider name")
     type: str = Field(..., description="Provider type (openai, groq, etc.)")
-    api_key: str | None = Field(None, description="API key (if required)")
-    base_url: str | None = Field(None, description="Base URL for API")
+    api_key: str | None = Field(default=None, description="API key (if required)")
+    base_url: str | None = Field(default=None, description="Base URL for API")
     model: str = Field(..., description="Model name to use")
     max_tokens: int = Field(
-        4000, ge=100, le=32000, description="Maximum tokens to generate"
+        default=4000, ge=100, le=32000, description="Maximum tokens to generate"
     )
-    temperature: float = Field(0.7, ge=0.0, le=2.0, description="Sampling temperature")
+    temperature: float = Field(
+        default=0.7, ge=0.0, le=2.0, description="Sampling temperature"
+    )
     timeout_seconds: int = Field(
-        30, ge=5, le=300, description="Request timeout in seconds"
+        default=30, ge=5, le=300, description="Request timeout in seconds"
     )
-    retry_attempts: int = Field(3, ge=0, le=10, description="Number of retry attempts")
+    retry_attempts: int = Field(
+        default=3, ge=0, le=10, description="Number of retry attempts"
+    )
     priority: int = Field(
-        1, ge=1, le=10, description="Priority for fallback (lower = higher priority)"
+        default=1,
+        ge=1,
+        le=10,
+        description="Priority for fallback (lower = higher priority)",
     )
-    enabled: bool = Field(True, description="Whether provider is enabled")
+    enabled: bool = Field(default=True, description="Whether provider is enabled")
     metadata: dict[str, Any] = Field(
         default_factory=dict, description="Additional configuration"
     )
@@ -108,13 +128,15 @@ class ExecutionConfig(BaseModel):
     """Execution configuration."""
 
     container_runtime: str = Field(
-        "docker", description="Container runtime (docker, podman)"
+        default="docker", description="Container runtime (docker, podman)"
     )
-    base_image: str = Field("python:3.11-slim", description="Base container image")
+    base_image: str = Field(
+        default="python:3.11-slim", description="Base container image"
+    )
     working_directory: str = Field(
-        "/workspace", description="Working directory in container"
+        default="/workspace", description="Working directory in container"
     )
-    user: str = Field("nobody", description="User to run as in container")
+    user: str = Field(default="nobody", description="User to run as in container")
     environment: dict[str, str] = Field(
         default_factory=dict, description="Environment variables"
     )
@@ -126,8 +148,12 @@ class ExecutionConfig(BaseModel):
         default_factory=list, description="Capabilities to drop"
     )
     cap_add: list[str] = Field(default_factory=list, description="Capabilities to add")
-    seccomp_profile: str | None = Field(None, description="Seccomp profile path")
-    apparmor_profile: str | None = Field(None, description="AppArmor profile name")
+    seccomp_profile: str | None = Field(
+        default=None, description="Seccomp profile path"
+    )
+    apparmor_profile: str | None = Field(
+        default=None, description="AppArmor profile name"
+    )
     metadata: dict[str, Any] = Field(
         default_factory=dict, description="Additional configuration"
     )
@@ -136,7 +162,7 @@ class ExecutionConfig(BaseModel):
 class CapibaraConfig(BaseModel):
     """Main Capibara configuration."""
 
-    version: str = Field("1.0", description="Configuration version")
+    version: str = Field(default="1.0", description="Configuration version")
     llm_providers: list[LLMProviderConfig] = Field(
         ..., description="LLM provider configurations"
     )

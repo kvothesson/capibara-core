@@ -41,7 +41,7 @@ class ExecutionMetrics:
 class ExecutionMonitor:
     """Monitors script execution in containers."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.active_executions: dict[str, ExecutionMetrics] = {}
 
     def start_execution(self, execution_id: str) -> ExecutionMetrics:

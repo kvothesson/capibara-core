@@ -38,7 +38,7 @@ def create_app() -> FastAPI:
 
     # Add request logging middleware
     @app.middleware("http")
-    async def log_requests(request: Request, call_next):
+    async def log_requests(request: Request, call_next) -> Response:
         start_time = datetime.now(UTC)
 
         # Log request
@@ -102,10 +102,10 @@ def create_app() -> FastAPI:
             )
 
     @app.get("/health/status")
-    async def health_status_endpoint():
+    async def health_status_endpoint() -> JSONResponse:
         """Get cached health status."""
         try:
-            result = health_status()
+            result = await health_status()
             status_code = 200 if result.get("overall_status") == "healthy" else 503
             return JSONResponse(content=result, status_code=status_code)
         except Exception as e:

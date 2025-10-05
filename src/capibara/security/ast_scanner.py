@@ -13,7 +13,7 @@ logger = get_logger(__name__)
 class ASTScanner:
     """Scans generated code for security violations using AST analysis."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.dangerous_imports = {
             "os",
             "subprocess",

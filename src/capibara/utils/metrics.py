@@ -180,7 +180,7 @@ class MetricsCollector:
 
     def record_script_generation(
         self, language: str, provider: str, status: str, duration: float
-    ):
+    ) -> None:
         """Record script generation metrics."""
         self.script_generations_total.labels(
             language=language, provider=provider, status=status
@@ -200,7 +200,7 @@ class MetricsCollector:
 
     def record_script_execution(
         self, language: str, status: str, duration: float, memory_bytes: int
-    ):
+    ) -> None:
         """Record script execution metrics."""
         self.script_executions_total.labels(language=language, status=status).inc()
 
@@ -235,7 +235,7 @@ class MetricsCollector:
 
     def record_security_scan(
         self, language: str, policy: str, result: str, duration: float
-    ):
+    ) -> None:
         """Record security scan metrics."""
         self.security_scans_total.labels(
             language=language, policy=policy, result=result
@@ -271,7 +271,7 @@ class MetricsCollector:
         duration: float,
         tokens_prompt: int = 0,
         tokens_completion: int = 0,
-    ):
+    ) -> None:
         """Record LLM request metrics."""
         self.llm_requests_total.labels(
             provider=provider, model=model, status=status
@@ -319,11 +319,11 @@ class MetricsCollector:
 
     def get_metrics(self) -> str:
         """Get metrics in Prometheus format."""
-        return generate_latest(self.registry).decode("utf-8")  # type: ignore
+        return generate_latest(self.registry).decode("utf-8")
 
     def get_metrics_dict(self) -> dict[str, Any]:
         """Get metrics as a dictionary for debugging."""
-        metrics = {}
+        metrics: dict[str, Any] = {}
 
         # Collect all metric families
         for metric_family in self.registry.collect():
