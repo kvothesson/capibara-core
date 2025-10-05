@@ -43,12 +43,9 @@ jobs:
         twine upload dist/*
         
     - name: Create GitHub Release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      uses: softprops/action-gh-release@v1
       with:
-        tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref }}
+        name: Release ${{ github.ref_name }}
         body: |
           ## Changes in this Release
           
@@ -68,3 +65,6 @@ jobs:
           ```
         draft: false
         prerelease: false
+        files: dist/*
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
