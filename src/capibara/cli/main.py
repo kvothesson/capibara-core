@@ -18,7 +18,7 @@ console = Console()
 @click.option("--verbose", "-v", is_flag=True, help="Enable verbose logging")
 @click.option("--config", "-c", help="Path to configuration file")
 @click.pass_context
-def cli(ctx, verbose: bool, config: str | None):
+def cli(ctx: click.Context, verbose: bool, config: str | None) -> None:
     """Capibara - Generate executable scripts from natural language prompts."""
     ctx.ensure_object(dict)
     ctx.obj["verbose"] = verbose
@@ -79,7 +79,7 @@ def list_scripts(
 @click.option("--code/--no-code", default=True, help="Include generated code")
 @click.option("--logs/--no-logs", default=False, help="Include execution logs")
 @click.pass_context
-def show(ctx, script_id: str, code: bool, logs: bool):
+def show(ctx: click.Context, script_id: str, code: bool, logs: bool) -> None:
     """Show details of a specific script."""
     asyncio.run(_show_script(ctx, script_id, code, logs))
 
@@ -112,21 +112,21 @@ def clear(
 )
 @click.option("--json", is_flag=True, help="Output results in JSON format")
 @click.pass_context
-def health(ctx, quick: bool, json: bool):
+def health(ctx: click.Context, quick: bool, json: bool) -> None:
     """Check health of all components."""
     asyncio.run(_health_check(ctx, quick, json))
 
 
 @cli.command()
 @click.pass_context
-def stats(ctx):
+def stats(ctx: click.Context) -> None:
     """Show statistics for all components."""
     asyncio.run(_show_stats(ctx))
 
 
 @cli.command()
 @click.pass_context
-def doctor(ctx):
+def doctor(ctx: click.Context) -> None:
     """Check system health and dependencies."""
     asyncio.run(_doctor_check(ctx))
 
@@ -261,7 +261,9 @@ async def _list_scripts(
             console.print_exception()
 
 
-async def _show_script(ctx, script_id: str, code: bool, logs: bool):
+async def _show_script(
+    ctx: click.Context, script_id: str, code: bool, logs: bool
+) -> None:
     """Show script details."""
     try:
         client = _get_client(ctx)
@@ -356,7 +358,9 @@ async def _clear_cache(
             console.print_exception()
 
 
-async def _health_check(ctx, quick: bool = False, json_output: bool = False):
+async def _health_check(
+    ctx: click.Context, quick: bool = False, json_output: bool = False
+) -> None:
     """Check health of all components."""
     try:
         client = _get_client(ctx)
@@ -402,7 +406,7 @@ async def _health_check(ctx, quick: bool = False, json_output: bool = False):
             console.print_exception()
 
 
-async def _show_stats(ctx):
+async def _show_stats(ctx: click.Context) -> None:
     """Show statistics."""
     try:
         client = _get_client(ctx)
@@ -443,7 +447,7 @@ async def _show_stats(ctx):
             console.print_exception()
 
 
-async def _doctor_check(ctx):
+async def _doctor_check(ctx: click.Context) -> None:
     """Check system health and dependencies."""
     import sys
 

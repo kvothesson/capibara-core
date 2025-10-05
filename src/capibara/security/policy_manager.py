@@ -67,6 +67,7 @@ class PolicyManager:
         strict_policy = SecurityPolicy(
             name="strict",
             description="Strict security policy with maximum restrictions",
+            version="1.0",
             rules=[
                 SecurityRule(
                     name="no_dangerous_imports",
@@ -74,6 +75,7 @@ class PolicyManager:
                     pattern=r"import\s+(os|subprocess|sys|shutil|socket|urllib|requests|pickle|ctypes|multiprocessing|threading|eval|exec|compile|__import__)",
                     severity="error",
                     action="block",
+                    language=None,
                 ),
                 SecurityRule(
                     name="no_dangerous_functions",
@@ -81,6 +83,7 @@ class PolicyManager:
                     pattern=r"(eval|exec|compile|__import__|open|file|input|exit|quit)\s*\(",
                     severity="error",
                     action="block",
+                    language=None,
                 ),
                 SecurityRule(
                     name="no_system_calls",
@@ -88,6 +91,7 @@ class PolicyManager:
                     pattern=r"os\.system|subprocess\.|os\.popen",
                     severity="error",
                     action="block",
+                    language=None,
                 ),
             ],
             resource_limits=ResourceLimits(
@@ -134,6 +138,7 @@ class PolicyManager:
         moderate_policy = SecurityPolicy(
             name="moderate",
             description="Moderate security policy with balanced restrictions",
+            version="1.0",
             rules=[
                 SecurityRule(
                     name="no_dangerous_imports",
@@ -141,6 +146,7 @@ class PolicyManager:
                     pattern=r"import\s+(subprocess|socket|urllib|requests|pickle|ctypes|multiprocessing|threading|eval|exec|compile|__import__)",
                     severity="error",
                     action="block",
+                    language=None,
                 ),
                 SecurityRule(
                     name="no_dangerous_functions",
@@ -148,6 +154,7 @@ class PolicyManager:
                     pattern=r"(eval|exec|compile|__import__|exit|quit)\s*\(",
                     severity="error",
                     action="block",
+                    language=None,
                 ),
                 SecurityRule(
                     name="warn_system_calls",
@@ -202,6 +209,7 @@ class PolicyManager:
                     pattern=r"(eval|exec|compile|__import__)\s*\(",
                     severity="error",
                     action="block",
+                    language=None,
                 ),
                 SecurityRule(
                     name="warn_dangerous_imports",
@@ -267,6 +275,7 @@ class PolicyManager:
         return SecurityPolicy(
             name="basic",
             description="Basic restrictive policy",
+            version="1.0",
             rules=[
                 SecurityRule(
                     name="no_dangerous_imports",
@@ -274,6 +283,7 @@ class PolicyManager:
                     pattern=r"import\s+(os|subprocess|sys|shutil|socket|urllib|requests|pickle|ctypes|multiprocessing|threading|eval|exec|compile|__import__)",
                     severity="error",
                     action="block",
+                    language=None,
                 ),
                 SecurityRule(
                     name="no_dangerous_functions",
@@ -281,6 +291,7 @@ class PolicyManager:
                     pattern=r"(eval|exec|compile|__import__|open|file|input|exit|quit|reload)\s*\(",
                     severity="error",
                     action="block",
+                    language=None,
                 ),
             ],
             resource_limits=ResourceLimits(

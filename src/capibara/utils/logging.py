@@ -30,7 +30,7 @@ structlog.configure(
 
 def get_logger(name: str) -> structlog.BoundLogger:
     """Get a structured logger for the given name."""
-    return structlog.get_logger(name)
+    return structlog.get_logger(name)  # type: ignore
 
 
 def setup_logging(
@@ -71,7 +71,7 @@ def setup_logging(
 
     # Configure structlog based on format
     if log_format == "json":
-        processors = [
+        processors: list[Any] = [
             structlog.stdlib.filter_by_level,
             structlog.stdlib.add_logger_name,
             structlog.stdlib.add_log_level,

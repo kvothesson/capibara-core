@@ -11,7 +11,7 @@ logger = get_logger(__name__)
 class PromptProcessor:
     """Processes natural language prompts for script generation."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.prompt_templates = {
             "data_processing": "Process the following data: {prompt}",
             "file_operations": "Perform file operations: {prompt}",

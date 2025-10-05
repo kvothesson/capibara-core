@@ -122,6 +122,7 @@ class ConfigManager:
         """Load configuration from various sources."""
         # Start with defaults
         self.config = CapibaraConfig()
+        assert self.config is not None  # Help mypy understand config is not None
 
         # Load from environment variables
         self._load_from_env()
@@ -140,6 +141,8 @@ class ConfigManager:
 
     def _load_from_env(self) -> None:
         """Load configuration from environment variables."""
+        assert self.config is not None  # Config should be initialized by now
+
         # Load .env file if it exists
         env_files = [".env", "~/.capibara/.env", "/etc/capibara/.env"]
 
@@ -299,6 +302,8 @@ class ConfigManager:
 
     def _merge_config(self, config_data: dict[str, Any]) -> None:
         """Merge configuration data into current config."""
+        assert self.config is not None  # Config should be initialized by now
+
         # This is a simplified merge - in production you'd want more sophisticated merging
         if "database" in config_data:
             db_config = config_data["database"]
@@ -348,6 +353,8 @@ class ConfigManager:
 
     def _validate_config(self) -> None:
         """Validate configuration settings."""
+        assert self.config is not None  # Config should be initialized by now
+
         # Validate required API keys
         if not self.config.llm.openai_api_key and not self.config.llm.groq_api_key:
             logger.warning("No LLM API keys configured. At least one is required.")
@@ -418,6 +425,8 @@ class ConfigManager:
 
     def get_config(self) -> CapibaraConfig:
         """Get the current configuration."""
+        if self.config is None:
+            raise RuntimeError("Configuration not loaded")
         return self.config
 
     def reload_config(self) -> None:
@@ -427,6 +436,8 @@ class ConfigManager:
 
     def save_config(self, output_file: str) -> None:
         """Save current configuration to file."""
+        assert self.config is not None  # Config should be initialized by now
+
         try:
             config_dict = {
                 "database": {

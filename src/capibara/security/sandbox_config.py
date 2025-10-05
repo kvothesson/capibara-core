@@ -60,7 +60,7 @@ class SandboxConfig(BaseModel):
 class SandboxConfigManager:
     """Manages sandbox configurations for different security levels."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.configs: dict[str, SandboxConfig] = {}
         self._load_default_configs()
 
@@ -202,6 +202,8 @@ class SandboxConfigManager:
             security_opt=["no-new-privileges:true"],
             cap_drop=["ALL"],
             cap_add=[],
+            seccomp_profile=None,
+            apparmor_profile=None,
             network_mode="none",
             read_only=True,
             resource_limits=ResourceLimits(
@@ -236,11 +238,15 @@ class SandboxConfigManager:
 
         # Add seccomp profile if specified
         if config.seccomp_profile:
-            docker_config["security_opt"].append(f"seccomp={config.seccomp_profile}")
+            security_opts = docker_config["security_opt"]
+            assert isinstance(security_opts, list)
+            security_opts.append(f"seccomp={config.seccomp_profile}")
 
         # Add AppArmor profile if specified
         if config.apparmor_profile:
-            docker_config["security_opt"].append(f"apparmor={config.apparmor_profile}")
+            security_opts = docker_config["security_opt"]
+            assert isinstance(security_opts, list)
+            security_opts.append(f"apparmor={config.apparmor_profile}")
 
         return docker_config
 
@@ -265,10 +271,14 @@ class SandboxConfigManager:
 
         # Add seccomp profile if specified
         if config.seccomp_profile:
-            podman_config["security_opt"].append(f"seccomp={config.seccomp_profile}")
+            security_opts = podman_config["security_opt"]
+            assert isinstance(security_opts, list)
+            security_opts.append(f"seccomp={config.seccomp_profile}")
 
         # Add AppArmor profile if specified
         if config.apparmor_profile:
-            podman_config["security_opt"].append(f"apparmor={config.apparmor_profile}")
+            security_opts = podman_config["security_opt"]
+            assert isinstance(security_opts, list)
+            security_opts.append(f"apparmor={config.apparmor_profile}")
 
         return podman_config

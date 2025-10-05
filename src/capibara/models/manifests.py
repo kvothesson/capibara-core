@@ -144,7 +144,7 @@ class CapibaraConfig(BaseModel):
         ..., description="Security policies"
     )
     execution: ExecutionConfig = Field(
-        default_factory=ExecutionConfig, description="Execution configuration"
+        default_factory=lambda: ExecutionConfig(), description="Execution configuration"
     )
     cache: dict[str, Any] = Field(
         default_factory=dict, description="Cache configuration"

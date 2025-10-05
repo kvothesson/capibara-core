@@ -169,10 +169,6 @@ def _validate_run_response(response: RunResponse) -> bool:
 
 def _validate_list_response(response: ListResponse) -> bool:
     """Validate ListResponse."""
-    if not isinstance(response.scripts, list):
-        logger.error("ListResponse validation failed: scripts must be a list")
-        return False
-
     if response.total_count < 0:
         logger.error(
             "ListResponse validation failed: negative total_count",
@@ -215,12 +211,6 @@ def _validate_clear_response(response: ClearResponse) -> bool:
         logger.error(
             "ClearResponse validation failed: negative cleared_count",
             cleared_count=response.cleared_count,
-        )
-        return False
-
-    if not isinstance(response.cleared_script_ids, list):
-        logger.error(
-            "ClearResponse validation failed: cleared_script_ids must be a list"
         )
         return False
 

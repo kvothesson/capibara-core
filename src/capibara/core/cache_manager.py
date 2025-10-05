@@ -40,7 +40,7 @@ class CacheManager:
 
         try:
             with open(script_file) as f:
-                script_data = json.load(f)
+                script_data: dict[str, Any] = json.load(f)
 
             # Check if script is expired
             if self._is_expired(script_data):
@@ -76,13 +76,13 @@ class CacheManager:
             script_data["cache_hit_count"] = 0
 
             # Convert all datetime objects to ISO format strings
-            def convert_datetime(obj):
+            def convert_datetime(obj: Any) -> str:
                 if hasattr(obj, "isoformat"):
                     return obj.isoformat()
                 return str(obj)
 
             # Recursively convert datetime objects
-            def clean_data(data):
+            def clean_data(data: Any) -> Any:
                 if isinstance(data, dict):
                     return {k: clean_data(v) for k, v in data.items()}
                 elif isinstance(data, list):
@@ -305,7 +305,7 @@ class CacheManager:
         if self.metadata_file.exists():
             try:
                 with open(self.metadata_file) as f:
-                    return json.load(f)
+                    return json.load(f)  # type: ignore
             except Exception as e:
                 logger.warning("Error loading cache metadata", error=str(e))
 

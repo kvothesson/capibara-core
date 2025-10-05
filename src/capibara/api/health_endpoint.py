@@ -67,7 +67,7 @@ class HealthCheck:
 class DatabaseHealthCheck(HealthCheck):
     """Database connectivity health check."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__("database", critical=True)
 
     async def _perform_check(self) -> dict[str, Any]:
@@ -87,7 +87,7 @@ class DatabaseHealthCheck(HealthCheck):
 class CacheHealthCheck(HealthCheck):
     """Cache system health check."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__("cache", critical=False)
 
     async def _perform_check(self) -> dict[str, Any]:
@@ -107,7 +107,7 @@ class CacheHealthCheck(HealthCheck):
 class LLMProvidersHealthCheck(HealthCheck):
     """LLM providers health check."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__("llm_providers", critical=True)
 
     async def _perform_check(self) -> dict[str, Any]:
@@ -184,7 +184,7 @@ class LLMProvidersHealthCheck(HealthCheck):
 class ContainerRuntimeHealthCheck(HealthCheck):
     """Container runtime health check."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__("container_runtime", critical=True)
 
     async def _perform_check(self) -> dict[str, Any]:
@@ -212,7 +212,7 @@ class ContainerRuntimeHealthCheck(HealthCheck):
 class DiskSpaceHealthCheck(HealthCheck):
     """Disk space health check."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__("disk_space", critical=False)
 
     async def _perform_check(self) -> dict[str, Any]:
@@ -248,7 +248,7 @@ class DiskSpaceHealthCheck(HealthCheck):
 class MemoryHealthCheck(HealthCheck):
     """Memory usage health check."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__("memory", critical=False)
 
     async def _perform_check(self) -> dict[str, Any]:
@@ -285,7 +285,7 @@ class MemoryHealthCheck(HealthCheck):
 class SecurityPoliciesHealthCheck(HealthCheck):
     """Security policies health check."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__("security_policies", critical=False)
 
     async def _perform_check(self) -> dict[str, Any]:
@@ -323,7 +323,7 @@ class SecurityPoliciesHealthCheck(HealthCheck):
 class HealthChecker:
     """Main health checker that manages all health checks."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.checks: list[HealthCheck] = [
             DatabaseHealthCheck(),
             CacheHealthCheck(),

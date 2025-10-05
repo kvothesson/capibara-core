@@ -9,7 +9,7 @@ def generate_fingerprint(
     prompt: str,
     language: str,
     context: dict[str, Any],
-    security_policy: str = None,
+    security_policy: str | None = None,
     **kwargs: Any,
 ) -> str:
     """Generate a SHA-256 fingerprint for content-addressable caching."""
@@ -35,7 +35,7 @@ def _normalize_context(context: dict[str, Any]) -> dict[str, Any]:
         return {}
 
     # Sort keys and normalize values
-    normalized = {}
+    normalized: dict[str, Any] = {}
     for key, value in sorted(context.items()):
         # Skip specific input values for caching - only include type information
         if key == "inputs" and isinstance(value, list):

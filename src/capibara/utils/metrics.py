@@ -24,7 +24,7 @@ class MetricsCollector:
         self.registry = registry or CollectorRegistry()
         self._setup_metrics()
 
-    def _setup_metrics(self):
+    def _setup_metrics(self) -> None:
         """Set up Prometheus metrics."""
 
         # Script generation metrics
@@ -216,7 +216,7 @@ class MetricsCollector:
             memory_bytes=memory_bytes,
         )
 
-    def record_cache_operation(self, operation: str, result: str):
+    def record_cache_operation(self, operation: str, result: str) -> None:
         """Record cache operation metrics."""
         self.cache_operations_total.labels(operation=operation, result=result).inc()
 
@@ -224,7 +224,7 @@ class MetricsCollector:
             "Recorded cache operation metrics", operation=operation, result=result
         )
 
-    def update_cache_metrics(self, size_bytes: int, entries_count: int):
+    def update_cache_metrics(self, size_bytes: int, entries_count: int) -> None:
         """Update cache size and entry count metrics."""
         self.cache_size_bytes.set(size_bytes)
         self.cache_entries_total.set(entries_count)
@@ -251,7 +251,7 @@ class MetricsCollector:
             duration=duration,
         )
 
-    def record_security_violation(self, rule_name: str, severity: str):
+    def record_security_violation(self, rule_name: str, severity: str) -> None:
         """Record security violation metrics."""
         self.security_violations_total.labels(
             rule_name=rule_name, severity=severity
@@ -299,19 +299,19 @@ class MetricsCollector:
             duration=duration,
         )
 
-    def update_active_containers(self, count: int):
+    def update_active_containers(self, count: int) -> None:
         """Update active containers count."""
         self.active_containers.set(count)
 
         logger.debug("Updated active containers count", count=count)
 
-    def record_container_error(self, error_type: str):
+    def record_container_error(self, error_type: str) -> None:
         """Record container error metrics."""
         self.container_errors_total.labels(error_type=error_type).inc()
 
         logger.debug("Recorded container error metrics", error_type=error_type)
 
-    def update_health_status(self, component: str, healthy: bool):
+    def update_health_status(self, component: str, healthy: bool) -> None:
         """Update health check status."""
         self.health_check_status.labels(component=component).set(1 if healthy else 0)
 
@@ -319,7 +319,7 @@ class MetricsCollector:
 
     def get_metrics(self) -> str:
         """Get metrics in Prometheus format."""
-        return generate_latest(self.registry).decode("utf-8")
+        return generate_latest(self.registry).decode("utf-8")  # type: ignore
 
     def get_metrics_dict(self) -> dict[str, Any]:
         """Get metrics as a dictionary for debugging."""

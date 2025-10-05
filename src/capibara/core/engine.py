@@ -124,11 +124,16 @@ class CapibaraEngine:
             code=script_code,
             execution_result=execution_result,
             cached=False,
+            cache_hit_count=0,
             security_policy=request.security_policy,
-            llm_provider=self.script_generator.last_provider_used,
+            llm_provider=self.script_generator.last_provider_used or "unknown",
             fingerprint=fingerprint,
             created_at=datetime.now(UTC),
-            metadata=script_info["metadata"],
+            metadata=(
+                script_info["metadata"]
+                if isinstance(script_info["metadata"], dict)
+                else {}
+            ),
         )
 
         # Log audit event
@@ -211,8 +216,14 @@ class CapibaraEngine:
             event_id=self._generate_event_id(),
             event_type=event_type,
             script_id=script_id,
+            user_id=None,
+            session_id=None,
+            severity="info",
             message=f"Event: {event_type}",
             details=kwargs,
+            ip_address=None,
+            user_agent=None,
+            resource_usage=None,
         )
         # This would be sent to audit logging system
         logger.info("Audit event", **event.model_dump())

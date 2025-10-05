@@ -3,6 +3,7 @@
 import time
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from threading import Thread
+from typing import Any
 
 from capibara.utils.logging import get_logger
 from capibara.utils.metrics import get_metrics_collector
@@ -13,7 +14,7 @@ logger = get_logger(__name__)
 class MetricsHandler(BaseHTTPRequestHandler):
     """HTTP handler for metrics endpoint."""
 
-    def do_GET(self):
+    def do_GET(self) -> None:
         """Handle GET requests to metrics endpoint."""
         if self.path == "/metrics":
             self._handle_metrics()
@@ -22,7 +23,7 @@ class MetricsHandler(BaseHTTPRequestHandler):
         else:
             self._handle_not_found()
 
-    def _handle_metrics(self):
+    def _handle_metrics(self) -> None:
         """Handle metrics requests."""
         try:
             metrics_collector = get_metrics_collector()
@@ -44,7 +45,7 @@ class MetricsHandler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(f"Internal Server Error: {str(e)}".encode())
 
-    def _handle_health(self):
+    def _handle_health(self) -> None:
         """Handle health check requests."""
         try:
             # Simple health check response
@@ -72,7 +73,7 @@ class MetricsHandler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(f"Internal Server Error: {str(e)}".encode())
 
-    def _handle_not_found(self):
+    def _handle_not_found(self) -> None:
         """Handle 404 requests."""
         self.send_response(404)
         self.send_header("Content-Type", "text/plain")
@@ -90,8 +91,8 @@ class MetricsServer:
     def __init__(self, host: str = "0.0.0.0", port: int = 8080):
         self.host = host
         self.port = port
-        self.server: HTTPServer = None
-        self.server_thread: Thread = None
+        self.server: HTTPServer | None = None
+        self.server_thread: Thread | None = None
         self.running = False
 
     def start(self) -> None:
@@ -164,11 +165,13 @@ def stop_metrics_server(server: MetricsServer) -> None:
 
 
 # Global metrics server instance
-_metrics_server: MetricsServer = None
+_metrics_server: MetricsServer | None = None
 
 
 def get_metrics_server() -> MetricsServer:
     """Get the global metrics server instance."""
+    if _metrics_server is None:
+        raise RuntimeError("Metrics server not initialized")
     return _metrics_server
 
 
@@ -184,7 +187,7 @@ if __name__ == "__main__":
     import signal
     import sys
 
-    def signal_handler(sig, frame):
+    def signal_handler(sig: int, frame: Any) -> None:
         logger.info("Received shutdown signal")
         if _metrics_server:
             _metrics_server.stop()

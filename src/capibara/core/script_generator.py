@@ -14,7 +14,7 @@ class ScriptGenerator:
     def __init__(self, fallback_manager: FallbackManager):
         self.fallback_manager = fallback_manager
         self.last_provider_used: str | None = None
-        self.generation_stats = {
+        self.generation_stats: dict[str, Any] = {
             "total_generations": 0,
             "successful_generations": 0,
             "failed_generations": 0,
@@ -53,9 +53,9 @@ class ScriptGenerator:
 
             # Update stats
             self.generation_stats["successful_generations"] += 1
-            self.generation_stats["provider_usage"][provider.name] = (
-                self.generation_stats["provider_usage"].get(provider.name, 0) + 1
-            )
+            provider_usage = self.generation_stats["provider_usage"]
+            assert isinstance(provider_usage, dict)
+            provider_usage[provider.name] = provider_usage.get(provider.name, 0) + 1
 
             logger.info(
                 "Script generated successfully",
@@ -197,11 +197,10 @@ PowerShell-specific requirements:
     def get_generation_stats(self) -> dict[str, Any]:
         """Get generation statistics."""
         total = self.generation_stats["total_generations"]
-        success_rate = (
-            self.generation_stats["successful_generations"] / total * 100
-            if total > 0
-            else 0
-        )
+        assert isinstance(total, int)
+        successful = self.generation_stats["successful_generations"]
+        assert isinstance(successful, int)
+        success_rate = successful / total * 100 if total > 0 else 0
 
         return {
             **self.generation_stats,
