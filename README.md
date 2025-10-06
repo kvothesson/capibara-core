@@ -129,6 +129,123 @@ DEFAULT_SECURITY_POLICY=moderate
 CACHE_TTL=3600
 ```
 
+## 📊 Observability
+
+Capibara Core provides comprehensive logging, metrics, and monitoring capabilities for production environments.
+
+### 📝 Logging
+
+**Structured JSON logs** with correlation IDs for easy analysis:
+
+```json
+{
+  "timestamp": "2024-01-15T10:30:45.123Z",
+  "level": "INFO",
+  "logger": "capibara.core.engine",
+  "event": "script_generated",
+  "script_id": "sha256:abc123...",
+  "language": "python",
+  "provider": "openai",
+  "duration_ms": 1250,
+  "user_id": "user_123"
+}
+```
+
+**Features:**
+- **Structured logging** with `structlog`
+- **Audit trail** for all security events
+- **Configurable levels** (DEBUG, INFO, WARNING, ERROR)
+- **File rotation** and retention policies
+- **Multiple formats** (JSON, console)
+
+**Configuration:**
+```bash
+# Set log level and format
+export CAPIBARA_LOG_LEVEL=INFO
+export CAPIBARA_LOG_FORMAT=json
+export CAPIBARA_LOG_FILE=~/.capibara/logs/app.log
+```
+
+### 📈 Metrics
+
+**Prometheus metrics** exposed at `/metrics` endpoint:
+
+```bash
+# Key metrics available:
+capibara_script_generations_total{language="python", provider="openai", status="success"}
+capibara_script_execution_duration_seconds{language="python"}
+capibara_security_violations_total{rule_name="dangerous_import", severity="high"}
+capibara_cache_operations_total{operation="get", result="hit"}
+capibara_llm_requests_total{provider="openai", model="gpt-4", status="success"}
+```
+
+**Features:**
+- **Comprehensive coverage**: Script generation, execution, cache, security, LLM usage
+- **Real-time metrics** with configurable scrape intervals
+- **Resource monitoring**: CPU, memory, disk usage
+- **Business metrics**: Success rates, performance trends
+
+### 🏥 Health Checks
+
+**Multi-component health monitoring** at `/health` endpoint:
+
+```bash
+# Quick health check
+curl http://localhost:8080/health
+
+# Comprehensive health check
+curl http://localhost:8080/health?full=true
+```
+
+**Monitored components:**
+- ✅ **LLM Providers**: OpenAI, Groq connectivity and response times
+- ✅ **Container Runtime**: Docker daemon status and resource availability
+- ✅ **Cache System**: Cache directory and hit rates
+- ✅ **Security Policies**: Policy files and rule availability
+- ✅ **System Resources**: Memory, disk space, CPU usage
+
+### 📊 Monitoring Stack
+
+**Pre-configured monitoring** with Grafana dashboards:
+
+```bash
+# Start monitoring stack
+docker-compose -f docker-compose.monitoring.yml up -d
+
+# Access dashboards
+open http://localhost:3000  # Grafana
+open http://localhost:9090  # Prometheus
+```
+
+**Included dashboards:**
+- 📊 **System Overview**: Script generations, executions, cache performance
+- 🔒 **Security Monitoring**: Violations, scan results, policy compliance
+- ⚡ **Performance**: Response times, resource usage, bottlenecks
+- 🏥 **Health Status**: Component status, dependencies, alerts
+
+### 🔍 Troubleshooting
+
+**Common monitoring commands:**
+
+```bash
+# Check system health
+capibara doctor
+
+# View recent logs
+tail -f ~/.capibara/logs/app.log | jq '.'
+
+# Check metrics
+curl http://localhost:8080/metrics | grep capibara_script_generations_total
+
+# Monitor health status
+watch -n 5 'curl -s http://localhost:8080/health | jq .'
+```
+
+**Log locations:**
+- Application logs: `~/.capibara/logs/app.log`
+- Audit logs: `~/.capibara/logs/audit/audit.jsonl`
+- Security violations: `~/.capibara/logs/audit/violations.jsonl`
+
 ## 📚 Real-World Examples
 
 ### 📊 Data Analysis
